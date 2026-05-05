@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ReclaimOS | Mobility</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0e0f0e; --bg2: #161714; --bg3: #1e1f1c; --card: #1a1b18;
+    --border: #2a2b27; --accent: #c8f060; --accent2: #8fb840;
+    --text: #e8e9e4; --text2: #9a9b94; --text3: #6a6b64;
+    --warm: #f0c860; --cool: #60c8f0; --morning: #f0c860;
+    --full: #c8f060; --preworkout: #60c8f0; --evening: #c060f0;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; overflow-x:hidden; }
+  .screen { display:none; min-height:100vh; }
+  .screen.active { display:flex; flex-direction:column; }
+  #home { padding:48px 28px 40px; position:relative; overflow:hidden; }
+  #home::before { content:''; position:absolute; top:-100px; right:-100px; width:400px; height:400px; background:radial-gradient(circle,rgba(200,240,96,0.08) 0%,transparent 70%); pointer-events:none; }
+  .home-header { margin-bottom:40px; }
+  .logo { font-family:'DM Serif Display',serif; font-size:13px; letter-spacing:0.2em; color:var(--accent); text-transform:uppercase; margin-bottom:4px; }
+  .home-title { font-family:'DM Serif Display',serif; font-size:40px; line-height:1.1; }
+  .home-title em { font-style:italic; color:var(--accent); }
+  .home-subtitle { margin-top:10px; font-size:14px; color:var(--text2); font-weight:300; line-height:1.6; }
+  .mode-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:28px; }
+  .mode-card { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:22px 18px; cursor:pointer; transition:all 0.2s; position:relative; overflow:hidden; }
+  .mode-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; border-radius:16px 16px 0 0; }
+  .mode-card.morning::before { background:var(--morning); }
+  .mode-card.full::before { background:var(--full); }
+  .mode-card.preworkout::before { background:var(--preworkout); }
+  .mode-card.evening::before { background:var(--evening); }
+  .mode-card:active { transform:scale(0.98); }
+  .mode-icon { font-size:26px; margin-bottom:10px; display:block; }
+  .mode-name { font-size:14px; font-weight:600; color:var(--text); margin-bottom:3px; }
+  .mode-time { font-size:12px; color:var(--text3); }
+  .mode-desc { font-size:11px; color:var(--text2); margin-top:7px; line-height:1.4; }
+  .mode-tag { display:inline-block; font-size:10px; padding:2px 8px; border-radius:20px; margin-top:9px; font-weight:500; }
+  .morning .mode-tag { background:rgba(240,200,96,0.15); color:var(--morning); }
+  .full .mode-tag { background:rgba(200,240,96,0.15); color:var(--full); }
+  .preworkout .mode-tag { background:rgba(96,200,240,0.15); color:var(--preworkout); }
+  .evening .mode-tag { background:rgba(192,96,240,0.15); color:var(--evening); }
+  .home-note { background:var(--bg3); border:1px solid var(--border); border-left:3px solid var(--accent); border-radius:8px; padding:14px; font-size:12px; color:var(--text2); line-height:1.6; }
+  #flow { flex-direction:column; }
+  .flow-header { padding:18px 22px 14px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:14px; background:var(--bg2); position:sticky; top:0; z-index:10; }
+  .back-btn { background:var(--bg3); border:1px solid var(--border); color:var(--text2); width:36px; height:36px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:16px; flex-shrink:0; }
+  .flow-header-info { flex:1; }
+  .flow-mode-label { font-size:10px; text-transform:uppercase; letter-spacing:0.15em; color:var(--text3); margin-bottom:2px; }
+  .flow-title { font-family:'DM Serif Display',serif; font-size:19px; }
+  .progress-bar-wrap { padding:10px 22px; background:var(--bg2); }
+  .progress-info { display:flex; justify-content:space-between; font-size:11px; color:var(--text3); margin-bottom:5px; }
+  .progress-bar { height:3px; background:var(--border); border-radius:2px; overflow:hidden; }
+  .progress-fill { height:100%; border-radius:2px; transition:width 0.4s ease; }
+  .flow-dots { display:flex; gap:4px; padding:8px 22px; background:var(--bg2); flex-wrap:wrap; }
+  .flow-dot { width:6px; height:6px; border-radius:50%; background:var(--border); transition:all 0.2s; }
+  .flow-dot.done { background:var(--accent2); }
+  .flow-dot.current { background:var(--accent); transform:scale(1.4); }
+  .movement-scroll { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; }
+  .movement-container { padding:18px 22px; display:flex; flex-direction:column; gap:14px; }
+  .section-label { font-size:10px; text-transform:uppercase; letter-spacing:0.15em; color:var(--text3); padding:0 0 4px; border-bottom:1px solid var(--border); }
+  .movement-card { background:var(--card); border:1px solid var(--border); border-radius:16px; overflow:hidden; }
+  .movement-visual { width:100%; background:var(--bg3); display:flex; align-items:center; justify-content:center; min-height:180px; }
+  .movement-visual svg { width:100%; max-width:320px; }
+  .movement-visual img { width:100%; display:block; }
+  .movement-body { padding:18px; }
+  .movement-name { font-family:'DM Serif Display',serif; font-size:21px; margin-bottom:4px; }
+  .movement-meta { display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap; }
+  .meta-tag { font-size:11px; padding:3px 9px; border-radius:20px; font-weight:500; }
+  .meta-duration { background:rgba(200,240,96,0.12); color:var(--accent); }
+  .meta-target { background:rgba(96,200,240,0.12); color:var(--cool); }
+  .meta-type { background:rgba(240,200,96,0.12); color:var(--warm); }
+  .movement-cue { font-size:14px; color:var(--text2); line-height:1.7; margin-bottom:12px; }
+  .cue-points { list-style:none; display:flex; flex-direction:column; gap:7px; }
+  .cue-points li { font-size:13px; color:var(--text2); padding-left:16px; position:relative; line-height:1.5; }
+  .cue-points li::before { content:'→'; position:absolute; left:0; color:var(--accent); font-size:10px; top:2px; }
+  .timer-section { padding:14px 22px 18px; background:var(--bg2); border-top:1px solid var(--border); }
+  .timer-ring-wrap { display:flex; justify-content:center; margin-bottom:10px; }
+  .timer-ring { transform:rotate(-90deg); }
+  .timer-ring-bg { fill:none; stroke:var(--border); stroke-width:4; }
+  .timer-ring-fill { fill:none; stroke:var(--accent); stroke-width:4; stroke-linecap:round; transition:stroke-dashoffset 1s linear; }
+  .timer-display { text-align:center; margin-bottom:12px; }
+  .timer-number { font-family:'DM Serif Display',serif; font-size:58px; line-height:1; }
+  .timer-label { font-size:11px; color:var(--text3); margin-top:3px; }
+  .side-indicator { display:flex; gap:8px; margin-top:10px; justify-content:center; }
+  .side-btn { padding:5px 14px; border-radius:20px; border:1px solid var(--border); background:transparent; color:var(--text3); font-size:12px; cursor:pointer; font-family:'DM Sans',sans-serif; }
+  .side-btn.active { background:rgba(200,240,96,0.15); border-color:var(--accent); color:var(--accent); }
+  .timer-controls { display:flex; gap:10px; justify-content:center; }
+  .timer-btn { padding:11px 26px; border-radius:50px; border:none; font-family:'DM Sans',sans-serif; font-size:14px; font-weight:600; cursor:pointer; }
+  .timer-btn.primary { background:var(--accent); color:var(--bg); flex:1; max-width:150px; }
+  .timer-btn.secondary { background:var(--bg3); color:var(--text2); border:1px solid var(--border); }
+  .nav-btns { display:flex; gap:10px; padding:14px 22px; background:var(--bg2); border-top:1px solid var(--border); }
+  .nav-btn { flex:1; padding:13px; border-radius:12px; border:1px solid var(--border); background:var(--bg3); color:var(--text2); font-family:'DM Sans',sans-serif; font-size:14px; font-weight:500; cursor:pointer; }
+  .nav-btn.next-btn { background:var(--accent); color:var(--bg); border-color:var(--accent); font-weight:600; }
+  #complete { align-items:center; justify-content:center; padding:48px 28px; text-align:center; }
+  .complete-icon { font-size:60px; margin-bottom:22px; }
+  .complete-title { font-family:'DM Serif Display',serif; font-size:34px; margin-bottom:10px; }
+  .complete-sub { font-size:15px; color:var(--text2); line-height:1.6; margin-bottom:36px; }
+  .complete-stats { display:flex; gap:14px; justify-content:center; margin-bottom:36px; }
+  .stat-box { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:14px 22px; text-align:center; }
+  .stat-num { font-family:'DM Serif Display',serif; font-size:26px; color:var(--accent); }
+  .stat-label { font-size:11px; color:var(--text3); margin-top:2px; }
+  .complete-btn { background:var(--accent); color:var(--bg); border:none; padding:15px 38px; border-radius:50px; font-family:'DM Sans',sans-serif; font-size:15px; font-weight:600; cursor:pointer; }
+</style>
+</head>
+<body>
+
+<div id="home" class="screen active">
+  <div class="home-header">
+    <div class="logo">ReclaimOS</div>
+    <h1 class="home-title">Mobility<br><em>System</em></h1>
+    <p class="home-subtitle">Choose your session. Every rep is an investment in staying on the court.</p>
+  </div>
+  <div class="mode-grid">
+    <div class="mode-card morning" onclick="startFlow('morning')">
+      <span class="mode-icon">☀️</span>
+      <div class="mode-name">Daily Minimum</div>
+      <div class="mode-time">10–12 min</div>
+      <div class="mode-desc">Core daily work. Non-negotiable on busy mornings.</div>
+      <span class="mode-tag">Every morning</span>
+    </div>
+    <div class="mode-card full" onclick="startFlow('full')">
+      <span class="mode-icon">🌿</span>
+      <div class="mode-name">Full Morning</div>
+      <div class="mode-time">20–25 min</div>
+      <div class="mode-desc">Complete flow when time allows. Hits everything.</div>
+      <span class="mode-tag">When time allows</span>
+    </div>
+    <div class="mode-card preworkout" onclick="startFlow('preworkout')">
+      <span class="mode-icon">⚡</span>
+      <div class="mode-name">Pre-Workout</div>
+      <div class="mode-time">8–10 min</div>
+      <div class="mode-desc">Dynamic activation before lifting. Replaces morning on Tue/Thu/Sat.</div>
+      <span class="mode-tag">Lifting days</span>
+    </div>
+    <div class="mode-card evening" onclick="startFlow('evening')">
+      <span class="mode-icon">🌙</span>
+      <div class="mode-name">Wind-Down</div>
+      <div class="mode-time">10 min</div>
+      <div class="mode-desc">Nervous system reset. Signal the day is done.</div>
+      <span class="mode-tag">Every evening</span>
+    </div>
+  </div>
+  <div class="home-note">
+    <strong style="color:var(--text)">On lifting days (Tue/Thu/Sat):</strong> do Pre-Workout instead of morning flow. Always do Wind-Down in the evening.
+  </div>
+</div>
+
+<div id="flow" class="screen">
+  <div class="flow-header">
+    <button class="back-btn" onclick="goHome()">←</button>
+    <div class="flow-header-info">
+      <div class="flow-mode-label" id="flowModeLabel"></div>
+      <div class="flow-title" id="flowTitle"></div>
+    </div>
+  </div>
+  <div class="progress-bar-wrap">
+    <div class="progress-info"><span id="progressText">Movement 1 of 8</span><span id="progressPct">0%</span></div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+  </div>
+  <div class="flow-dots" id="flowDots"></div>
+  <div class="movement-scroll">
+    <div class="movement-container" id="movementContainer"></div>
+  </div>
+  <div class="timer-section">
+    <div class="timer-ring-wrap">
+      <svg class="timer-ring" width="90" height="90" viewBox="0 0 100 100">
+        <circle class="timer-ring-bg" cx="50" cy="50" r="44"/>
+        <circle class="timer-ring-fill" id="timerRing" cx="50" cy="50" r="44" stroke-dasharray="276.46" stroke-dashoffset="0"/>
+      </svg>
+    </div>
+    <div class="timer-display">
+      <div class="timer-number" id="timerDisplay">0:30</div>
+      <div class="timer-label" id="timerLabel">Hold time</div>
+    </div>
+    <div id="sideIndicator" class="side-indicator" style="display:none">
+      <button class="side-btn active" id="sideLeft" onclick="setSide('left')">Left side</button>
+      <button class="side-btn" id="sideRight" onclick="setSide('right')">Right side</button>
+    </div>
+    <div class="timer-controls">
+      <button class="timer-btn secondary" onclick="resetTimer()">Reset</button>
+      <button class="timer-btn primary" id="timerBtn" onclick="toggleTimer()">Start</button>
+    </div>
+  </div>
+  <div class="nav-btns">
+    <button class="nav-btn" id="prevBtn" onclick="prevMovement()">← Prev</button>
+    <button class="nav-btn next-btn" id="nextBtn" onclick="nextMovement()">Next →</button>
+  </div>
+</div>
+
+<div id="complete" class="screen">
+  <div class="complete-icon">✓</div>
+  <div class="complete-title">Session Complete</div>
+  <div class="complete-sub" id="completeMsg">You showed up. That's the whole game.</div>
+  <div class="complete-stats">
+    <div class="stat-box"><div class="stat-num" id="statMoves">0</div><div class="stat-label">Movements</div></div>
+    <div class="stat-box"><div class="stat-num" id="statTime">0</div><div class="stat-label">Minutes</div></div>
+  </div>
+  <button class="complete-btn" onclick="goHome()">Back to Home</button>
+</div>
+
+<script>
+const MOVEMENTS = {
+  breathReset: { name:"Breath Reset", duration:60, sides:false, target:["nervous system","focus"], type:"breathwork",
+    cue:"Set the tone. This shifts your body from reactive mode to intentional mode before you move.",
+    points:["Sit or lie comfortably, one hand on belly","Inhale through nose for 4 slow counts — feel belly rise","Exhale through mouth for 6 slow counts — full empty","5 complete breaths minimum","Let thoughts float by — don't chase them"],
+    svg:`<svg viewBox="0 0 300 180" xmlns="http://www.w3.org/2000/svg"><rect width="300" height="180" fill="#12140f"/><rect x="55" y="108" width="185" height="32" rx="14" fill="#2d4a3e"/><circle cx="42" cy="124" r="18" fill="#d4956a"/><rect x="245" y="110" width="72" height="26" rx="10" fill="#d4956a"/><ellipse cx="188" cy="106" rx="22" ry="10" fill="#d4956a"/><ellipse cx="118" cy="106" rx="18" ry="9" fill="#d4956a" opacity="0.7"/><text x="170" y="52" text-anchor="middle" fill="#c060f0" font-size="13" font-family="DM Sans" font-weight="600">4 counts IN · 6 counts OUT</text><line x1="188" y1="104" x2="188" y2="82" stroke="#c8f060" stroke-width="2" stroke-dasharray="3,2"/><text x="200" y="80" fill="#c8f060" font-size="9" font-family="DM Sans">belly rises</text><text x="170" y="68" text-anchor="middle" fill="#9a9b94" font-size="9" font-family="DM Sans">Extended exhale activates the vagus nerve</text></svg>`},
+
+  ninetyNinetyStatic: { name:"90/90 Hip Opener", duration:60, sides:true, target:["hip ER","piriformis"], type:"static",
+    cue:"Foundation of hip mobility. Both knees at 90°. External rotation on front hip, internal rotation on rear. Use blocks under hands if tight.",
+    points:["Sit on floor, front shin parallel to body, rear shin behind — both knees at 90°","Sit tall, weight evenly on both hips","Lean gently into front hip — feel outer glute open","Use blocks if hips are very tight","Don't force — let gravity work over time"],
+    svg:`<svg viewBox="0 0 300 180" xmlns="http://www.w3.org/2000/svg"><rect width="300" height="180" fill="#12140f"/><line x1="20" y1="168" x2="280" y2="168" stroke="#2a2b27" stroke-width="2"/><line x1="82" y1="148" x2="82" y2="168" stroke="#d4956a" stroke-width="13" stroke-linecap="round"/><line x1="82" y1="148" x2="168" y2="144" stroke="#d4956a" stroke-width="13" stroke-linecap="round"/><ellipse cx="80" cy="168" rx="16" ry="6" fill="#b87848"/><line x1="168" y1="144" x2="170" y2="124" stroke="#d4956a" stroke-width="16" stroke-linecap="round"/><line x1="170" y1="124" x2="255" y2="128" stroke="#d4956a" stroke-width="14" stroke-linecap="round"/><line x1="255" y1="128" x2="258" y2="168" stroke="#d4956a" stroke-width="12" stroke-linecap="round"/><ellipse cx="258" cy="168" rx="15" ry="6" fill="#b87848"/><ellipse cx="170" cy="124" rx="32" ry="13" fill="#1a3a2a"/><rect x="152" y="74" width="36" height="52" rx="9" fill="#2d4a3e"/><circle cx="170" cy="62" r="16" fill="#d4956a"/><path d="M 82 138 Q 112 120 150 128 Q 162 134 162 148 Q 138 156 105 151 Z" fill="rgba(200,240,96,0.3)" stroke="#c8f060" stroke-width="1.5" stroke-dasharray="4,2"/><path d="M 70 148 L 70 162 L 84 162" stroke="#f0c860" stroke-width="1.5" fill="none"/><path d="M 246 128 L 246 142 L 260 142" stroke="#f0c860" stroke-width="1.5" fill="none"/><text x="55" y="172" fill="#f0c860" font-size="9" font-family="DM Sans">90°</text><text x="262" y="152" fill="#f0c860" font-size="9" font-family="DM Sans">90°</text><text x="96" y="150" fill="#c8f060" font-size="8" font-family="DM Sans">outer hip</text></svg>`},
+
+  ninetyNinetyIR: { name:"90/90 Internal Rotation", duration:45, sides:true, target:["hip IR","inner groin"], type:"dynamic",
+    cue:"From 90/90 base, rotate torso toward front leg and fold forward. Loads internal rotation of the front hip.",
+    points:["Start in 90/90 base position","Rotate torso toward your front shin","Fold forward over the front leg, reaching toward floor","Feel it deep in the front hip and inner thigh","Exhale to deepen — breathe into the tight spots"],
+    svg:`<svg viewBox="0 0 300 180" xmlns="http://www.w3.org/2000/svg"><rect width="300" height="180" fill="#12140f"/><line x1="20" y1="168" x2="280" y2="168" stroke="#2a2b27" stroke-width="2"/><line x1="82" y1="148" x2="82" y2="168" stroke="#d4956a" stroke-width="13" stroke-linecap="round"/><line x1="82" y1="148" x2="168" y2="144" stroke="#d4956a" stroke-width="13" stroke-linecap="round"/><ellipse cx="80" cy="168" rx="16" ry="6" fill="#b87848"/><line x1="168" y1="144" x2="170" y2="124" stroke="#d4956a" stroke-width="16" stroke-linecap="round"/><line x1="170" y1="124" x2="255" y2="128" stroke="#d4956a" stroke-width="14" stroke-linecap="round"/><line x1="255" y1="128" x2="258" y2="168" stroke="#d4956a" stroke-width="12" stroke-linecap="round"/><ellipse cx="258" cy="168" rx="15" ry="6" fill="#b87848"/><ellipse cx="170" cy="124" rx="32" ry="13" fill="#1a3a2a"/><line x1="170" y1="126" x2="102" y2="104" stroke="#2d4a3e" stroke-width="26" stroke-linecap="round"/><circle cx="90" cy="96" r="15" fill="#d4956a"/><ellipse cx="68" cy="131" rx="13" ry="7" fill="#d4956a"/><ellipse cx="80" cy="141" rx="13" ry="7" fill="#d4956a"/><path d="M 82 134 Q 112 118 148 126 Q 165 134 162 148 Q 130 156 98 151 Z" fill="rgba(200,240,96,0.3)" stroke="#c8f060" stroke-width="1.5" stroke-dasharray="4,2"/><text x="98" y="168" fill="#c8f060" font-size="8" font-family="DM Sans">inner hip</text></svg>`},
+
+  ninetyNinetyHurdler: { name:"90/90 Hurdler", duration:45, sides:true, target:["quad","hip flexor"], type:"static",
+    cue:"Rotate toward rear leg and lean back. Stretches front of rear hip and quad.",
+    points:["Start in 90/90 base","Rotate torso away from front leg, toward rear shin","Lean back, reach hand toward rear foot","Feel stretch in front of rear hip and quad","Keep chest open — don't collapse spine"],
+    svg:`<svg viewBox="0 0 300 180" xmlns="http://www.w3.org/2000/svg"><rect width="300" height="180" fill="#12140f"/><line x1="20" y1="168" x2="280" y2="168" stroke="#2a2b27" stroke-width="2"/><line x1="82" y1="148" x2="82" y2="168" stroke="#d4956a" stroke-width="13" stroke-linecap="round"/><line x1="82" y1="148" x2="168" y2="144" stroke="#d4956a" stroke-width="13" stroke-linecap="round"/><ellipse cx="80" cy="168" rx="16" ry="6" fill="#b87848"/><line x1="168" y1="144" x2="170" y2="124" stroke="#d4956a" stroke-width="16" stroke-linecap="round"/><line x1="170" y1="124" x2="255" y2="128" stroke="#d4956a" stroke-width="14" stroke-linecap="round"/><line x1="255" y1="128" x2="258" y2="168" stroke="#d4956a" stroke-width="12" stroke-linecap="round"/><ellipse cx="258" cy="168" rx="15" ry="6" fill="#b87848"/><ellipse cx="170" cy="124" rx="32" ry="13" fill="#1a3a2a"/><line x1="170" y1="126" x2="218" y2="94" stroke="#2d4a3e" stroke-width="26" stroke-linecap="round"/><circle cx="228" cy="84" r="15" fill="#d4956a"/><line x1="220" y1="98" x2="258" y2="134" stroke="#d4956a" stroke-width="9" stroke-linecap="round"/><path d="M 175 120 Q 205 108 232 116 Q 248 126 248 141 Q 228 152 200 148 Q 178 140 175 120" fill="rgba(200,240,96,0.3)" stroke="#c8f060" stroke-width="1.5" stroke-dasharray="4,2"/><text x="218" y="158" fill="#c8f060" font-size="8" font-family="DM Sans">front of hip</text></svg>`},
+
+  ninetyNinetyRearRot: { name:"90/90 Rear Leg Rotation", duration:45, sides:true, target:["hip capsule","hip IR"], type:"dynamic",
+    cue:"Lift the rear knee and slowly sweep it forward until the rear foot lands flat in front of you. Controlled articular work for the hip capsule.",
+    points:["Start in 90/90, hands behind you for support","Lift rear knee slightly off the floor","Slowly rotate rear leg forward — knee sweeps toward front","Continue until rear foot is flat on floor","Control every inch — don't flop the knee down"],
+    svg:`<svg viewBox="0 0 300 180" xmlns="http://www.w3.org/2000/svg"><rect width="300" height="180" fill="#12140f"/><line x1="20" y1="168" x2="280" y2="168" stroke="#2a2b27" stroke-width="2"/><line x1="82" y1="148" x2="82" y2="168" stroke="#d4956a" stroke-width="13" stroke-linecap="round"/><line x1="82" y1="148" x2="168" y2="144" stroke="#d4956a" stroke-width="13" stroke-linecap="round"/><ellipse cx="80" cy="168" rx="16" ry="6" fill="#b87848"/><ellipse cx="170" cy="122" rx="32" ry="13" fill="#1a3a2a"/><rect x="152" y="74" width="36" height="50" rx="9" fill="#2d4a3e"/><circle cx="170" cy="62" r="16" fill="#d4956a"/><line x1="170" y1="122" x2="255" y2="126" stroke="#d4956a" stroke-width="10" stroke-linecap="round" opacity="0.25" stroke-dasharray="5,3"/><line x1="255" y1="126" x2="258" y2="168" stroke="#d4956a" stroke-width="8" stroke-linecap="round" opacity="0.25" stroke-dasharray="5,3"/><path d="M 256 123 Q 248 100 226 92 Q 208 88 205 106 Q 202 120 210 136" stroke="#c8f060" stroke-width="2" fill="none" stroke-dasharray="5,3"/><line x1="170" y1="122" x2="218" y2="129" stroke="#d4956a" stroke-width="14" stroke-linecap="round"/><line x1="218" y1="129" x2="210" y2="168" stroke="#d4956a" stroke-width="12" stroke-linecap="round"/><ellipse cx="210" cy="168" rx="15" ry="6" fill="#b87848"/><text x="255" y="96" fill="#c8f060" font-size="9" font-family="DM Sans">rotate</text><text x="255" y="108" fill="#c8f060" font-size="9" font-family="DM Sans">forward</text></svg>`},
+
+  ninetyNinetyLift: { name:"90/90 Lift to Squat", duration:45, sides:true, target:["hip strength","transition"], type:"dynamic",
+    cue:"Press through the front foot and drive hips up into a low squat. Builds the hip strength to use the range you just opened.",
+    points:["Start in 90/90, hands on floor for support","Press through front foot and rear knee simultaneously","Drive hips up and forward into a low squat","Hold briefly — feel hip stability","Lower back down with control"],
+    svg:`<svg viewBox="0 0 300 180" xmlns="http://www.w3.org/2000/svg"><rect width="300" height="180" fill="#12140f"/><line x1="20" y1="168" x2="280" y2="168" stroke="#2a2b27" stroke-width="2"/><ellipse cx="122" cy="166" rx="20" ry="7" fill="#b87848"/><ellipse cx="218" cy="166" rx="20" ry="7" fill="#b87848"/><line x1="122" y1="166" x2="142" y2="126" stroke="#d4956a" stroke-width="14" stroke-linecap="round"/><line x1="218" y1="166" x2="198" y2="126" stroke="#d4956a" stroke-width="14" stroke-linecap="round"/><ellipse cx="170" cy="124" rx="34" ry="13" fill="#1a3a2a"/><rect x="152" y="74" width="36" height="52" rx="9" fill="#2d4a3e"/><circle cx="170" cy="62" r="16" fill="#d4956a"/><path d="M 140 124 Q 170 106 200 124 Q 200 142 170 144 Q 140 142 140 124" fill="rgba(200,240,96,0.2)" stroke="#c8f060" stroke-width="1.2"/><line x1="122" y1="158" x2="122" y2="135" stroke="#c8f060" stroke-width="1.8" marker-end="url(#ag)"/><line x1="218" y1="158" x2="218" y2="135" stroke="#c8f060" stroke-width="1.8" marker-end="url(#ag)"/><defs><marker id="ag" markerWidth="7" markerHeight="7" refX="3.5" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 Z" fill="#c8f060"/></marker></defs><text x="90" y="132" fill="#c8f060" font-size="8" font-family="DM Sans">press</text><text x="222" y="132" fill="#c8f060" font-size="8" font-family="DM Sans">press</text></svg>`},
+
+  frogStatic: { name:"Frog Stretch", duration:60, sides:false, target:["groin","adductors","hip ER"], type:"static",
+    cue:"Wide knees, sink hips back toward heels. One of the deepest groin and inner hip openers. Critical for lateral movement and cutting.",
+    points:["On hands and knees, spread knees as wide as comfortable","Turn feet out to match knee position","Slowly sink hips back toward heels","Keep torso long — don't collapse","Rock gently to find the deepest point"],
+    svg:`<svg viewBox="0 0 300 180" xmlns="http://www.w3.org/2000/svg"><rect width="300" height="180" fill="#12140f"/><line x1="20" y1="168" x2="280" y2="168" stroke="#2a2b27" stroke-width="2"/><ellipse cx="72" cy="158" rx="16" ry="10" fill="#d4956a"/><ellipse cx="268" cy="158" rx="16" ry="10" fill="#d4956a"/><line x1="72" y1="158" x2="72" y2="168" stroke="#d4956a" stroke-width="12" stroke-linecap="round"/><line x1="268" y1="158" x2="268" y2="168" stroke="#d4956a" stroke-width="12" stroke-linecap="round"/><ellipse cx="268" cy="168" rx="15" ry="6" fill="#b87848"/><ellipse cx="72" cy="168" rx="15" ry="6" fill="#b87848"/><line x1="170" y1="138" x2="72" y2="158" stroke="#d4956a" stroke-width="14" stroke-linecap="round"/><line x1="170" y1="138" x2="268" y2="158" stroke="#d4956a" stroke-width="14" stroke-linecap="round"/><ellipse cx="170" cy="168" rx="32" ry="8" fill="#b87848"/><ellipse cx="170" cy="136" rx="30" ry="13" fill="#1a3a2a"/><line x1="170" y1="136" x2="138" y2="108" stroke="#2d4a3e" stroke-width="24" stroke-linecap="round"/><circle cx="126" cy="98" r="15" fill="#d4956a"/><path d="M 72 148 Q 118 128 168 134 Q 170 142 155 152 Q 112 160 75 154 Z" fill="rgba(200,240,96,0.25)" stroke="#c8f060" stroke-width="1.5" stroke-dasharray="4,2"/><path d="M 268 148 Q 222 128 172 134 Q 170 142 185 152 Q 228 160 265 154 Z" fill="rgba(200,240,96,0.25)" stroke="#c8f060" stroke-width="1.5" stroke-dasharray="4,2"/><text x="170" y="108" text-anchor="middle" fill="#c8f060" font-size="9" font-family="DM Sans">knees wide · hips sink back</text></svg>`},
+
+  hipCARs: { name:"Hip CARs", duration:30, sides:true, target:["hip capsule","full ROM"], type:"CARs",
+    cue:"Controlled Articular Rotations. Map the full range of your hip under tension. Slow. Maximum range, maximum control. Pelvis does NOT move.",
+    points:["Stand on one leg, hand on wall for balance","Lift free knee to hip height in front","Sweep knee out to side (abduction)","Continue — knee sweeps behind (extension)","Full circle back to front — 3 rotations each direction","Pelvis completely still — only the leg moves"],
+    svg:`<svg viewBox="0 0 300 180" xmlns="http://www.w3.org/2000/svg"><rect width="300" height="180" fill="#12140f"/><line x1="20" y1="168" x2="280" y2="168" stroke="#2a2b27" stroke-width="2"/><rect x="28" y="72" width="12" height="96" rx="3" fill="#2a2b27"/><ellipse cx="158" cy="168" rx="18" ry="7" fill="#b87848"/><line x1="158" y1="168" x2="160" y2="126" stroke="#d4956a" stroke-width="14" stroke-linecap="round"/><ellipse cx="160" cy="126" rx="28" ry="12" fill="#1a3a2a"/><rect x="146" y="76" width="36" height="52" rx="9" fill="#2d4a3e"/><circle cx="164" cy="64" r="16" fill="#d4956a"/><line x1="148" y1="90" x2="40" y2="98" stroke="#d4956a" stroke-width="8" stroke-linecap="round"/><ellipse cx="37" cy="99" rx="10" ry="7" fill="#d4956a"/><circle cx="210" cy="136" r="44" stroke="#c8f060" stroke-width="2" fill="rgba(200,240,96,0.05)" stroke-dasharray="5,3"/><line x1="172" y1="128" x2="208" y2="94" stroke="#d4956a" stroke-width="12" stroke-linecap="round"/><ellipse cx="208" cy="91" rx="12" ry="9" fill="#d4956a"/><text x="258" y="126" fill="#c8f060" font-size="9" font-family="DM Sans">full</text><text x="258" y="138" fill="#c8f060" font-size="9" font-family="DM Sans">circle</text><rect x="146" y="120" width="28" height="12" rx="3" fill="none" stroke="#f0c860" stroke-width="1.2" stroke-dasharray="3,2"/><text x="160" y="117" text-anchor="middle" fill="#f0c860" font-size="8" font-family="DM Sans">pelvis still</text></svg>`},
+
+  couchStretch: { name:"Couch Stretch", duration:60, sides:true, target:["hip flexor","quad"], type:"static",
+    cue:"One of the deepest hip flexor and quad stretches. Use your bench to start. Squeeze the glute of the rear leg — this is the key cue.",
+    points:["Rear knee on floor/pad, rear foot up on bench behind you","Step front foot forward, shin vertical","Drive hips forward — squeeze rear glute HARD","Keep torso upright — don't lean forward","Feel it in front of rear hip and quad","Start at 50% — this opens over weeks"],
+    svg:`<svg viewBox="0 0 300 180" xmlns="http://www.w3.org/2000/svg"><rect width="300" height="180" fill="#12140f"/><line x1="20" y1="168" x2="280" y2="168" stroke="#2a2b27" stroke-width="2"/><rect x="228" y="122" width="95" height="46" rx="5" fill="#1e2018" stroke="#3a3b37" stroke-width="1.5"/><rect x="222" y="114" width="105" height="13" rx="4" fill="#2e2f2b"/><text x="275" y="108" text-anchor="middle" fill="#6a6b64" font-size="9" font-family="DM Sans">bench</text><ellipse cx="75" cy="166" rx="22" ry="8" fill="#b87848"/><line x1="75" y1="166" x2="82" y2="124" stroke="#d4956a" stroke-width="14" stroke-linecap="round"/><line x1="82" y1="124" x2="148" y2="106" stroke="#d4956a" stroke-width="13" stroke-linecap="round"/><ellipse cx="185" cy="166" rx="18" ry="9" fill="#b87848"/><line x1="185" y1="166" x2="230" y2="124" stroke="#d4956a" stroke-width="13" stroke-linecap="round"/><ellipse cx="233" cy="122" rx="18" ry="7" fill="#b87848"/><rect x="134" y="56" width="36" height="52" rx="9" fill="#2d4a3e"/><circle cx="152" cy="44" r="16" fill="#d4956a"/><path d="M 162 104 Q 185 91 210 98 Q 226 108 224 124 Q 206 134 184 128 Q 160 119 162 104" fill="rgba(200,240,96,0.3)" stroke="#c8f060" stroke-width="1.5" stroke-dasharray="4,2"/><text x="194" y="90" fill="#c8f060" font-size="8" font-family="DM Sans">hip flexor</text><text x="140" y="116" fill="#f0c860" font-size="8" font-family="DM Sans">← hips forward</text><ellipse cx="198" cy="162" rx="16" ry="10" fill="none" stroke="#c8f060" stroke-width="1.2" stroke-dasharray="3,2"/><text x="218" y="166" fill="#c8f060" font-size="8" font-family="DM Sans">squeeze</text></svg>`},
+
+  bearToKickout: { name:"Bear to Kick Out", duration:40, sides:true, target:["hip ER","thoracic","hip flexor"], type:"dynamic",
+    cue:"Bear hold → kick one leg out wide → rotate torso open toward ceiling. Full hip and thoracic opener in a flow.",
+    points:["On hands and knees, knees hovering slightly off floor","Rotate one leg out to the side, swinging wide","Plant foot, rotate torso open toward ceiling","Reach top arm up — full rotation","Return and repeat in slow rhythm","Breathe out as you rotate open"],
+    svg:`<svg viewBox="0 0 300 180" xmlns="http://www.w3.org/2000/svg"><rect width="300" height="180" fill="#12140f"/><line x1="20" y1="168" x2="280" y2="168" stroke="#2a2b27" stroke-width="2"/><ellipse cx="82" cy="148" rx="14" ry="7" fill="#d4956a"/><ellipse cx="118" cy="148" rx="14" ry="7" fill="#d4956a"/><line x1="82" y1="148" x2="102" y2="118" stroke="#d4956a" stroke-width="10" stroke-linecap="round"/><line x1="118" y1="148" x2="120" y2="118" stroke="#d4956a" stroke-width="10" stroke-linecap="round"/><rect x="98" y="98" width="75" height="28" rx="10" fill="#2d4a3e"/><circle cx="88" cy="98" r="14" fill="#d4956a"/><ellipse cx="130" cy="159" rx="14" ry="7" fill="#b87848"/><line x1="120" y1="124" x2="130" y2="159" stroke="#d4956a" stroke-width="12" stroke-linecap="round"/><line x1="110" y1="124" x2="248" y2="104" stroke="#d4956a" stroke-width="13" stroke-linecap="round"/><ellipse cx="254" cy="102" rx="14" ry="8" fill="#b87848"/><path d="M 155 96 Q 195 84 242 94 Q 255 104 248 118 Q 215 126 175 118 Q 152 111 155 96" fill="rgba(200,240,96,0.2)" stroke="#c8f060" stroke-width="1.5" stroke-dasharray="4,2"/><text x="254" y="90" fill="#c8f060" font-size="9" font-family="DM Sans">kick</text><text x="254" y="102" fill="#c8f060" font-size="9" font-family="DM Sans">+ rotate</text></svg>`},
+
+  deepLungeKickout: { name:"Deep Lunge to Kick Out", duration:40, sides:true, target:["hip flexor","hamstring"], type:"dynamic",
+    cue:"Deep lunge → shift back, straighten front leg. Alternates hip flexor load and hamstring stretch in one smooth flow.",
+    points:["Low lunge, front foot flat, rear knee on floor","Hands inside front foot for support","Shift weight back — straighten front leg","Feel hamstring stretch in the extended leg","Flow back into lunge — repeat rhythmically","5-6 flows each side"],
+    svg:`<svg viewBox="0 0 300 180" xmlns="http://www.w3.org/2000/svg"><rect width="300" height="180" fill="#12140f"/><line x1="20" y1="168" x2="280" y2="168" stroke="#2a2b27" stroke-width="2"/><ellipse cx="268" cy="163" rx="18" ry="8" fill="#b87848"/><line x1="195" y1="122" x2="268" y2="163" stroke="#d4956a" stroke-width="14" stroke-linecap="round"/><ellipse cx="52" cy="163" rx="20" ry="8" fill="#b87848"/><line x1="195" y1="122" x2="52" y2="163" stroke="#d4956a" stroke-width="14" stroke-linecap="round"/><path d="M 52 156 Q 100 138 155 129 Q 175 126 190 134 Q 175 149 140 156 Q 95 162 52 156" fill="rgba(200,240,96,0.25)" stroke="#c8f060" stroke-width="1.5" stroke-dasharray="4,2"/><line x1="195" y1="122" x2="148" y2="92" stroke="#2d4a3e" stroke-width="26" stroke-linecap="round"/><circle cx="136" cy="82" r="15" fill="#d4956a"/><line x1="150" y1="96" x2="108" y2="122" stroke="#d4956a" stroke-width="9" stroke-linecap="round"/><text x="105" y="148" fill="#c8f060" font-size="9" font-family="DM Sans">hamstring</text><text x="200" y="115" fill="#f0c860" font-size="8" font-family="DM Sans">shift back →</text></svg>`},
+
+  hipFlexorReach: { name:"Hip Flexor Reaches", duration:40, sides:true, target:["hip flexor","thoracic"], type:"dynamic",
+    cue:"Half-kneeling, squeeze rear glute, reach arms in 3 directions: up, side, and rotational. Takes the hip flexor through three planes.",
+    points:["Half-kneeling: front foot flat, rear knee on floor","Squeeze glute of rear leg — protects lower back","Reach both arms straight up — hip flexor lengthens","Side reach: lean away from rear leg, arms overhead","Rotational reach: rotate toward front leg, arms open","3 reaches each direction before switching"],
+    svg:`<svg viewBox="0 0 300 180" xmlns="http://www.w3.org/2000/svg"><rect width="300" height="180" fill="#12140f"/><line x1="20" y1="168" x2="280" y2="168" stroke="#2a2b27" stroke-width="2"/><ellipse cx="245" cy="163" rx="18" ry="7" fill="#b87848"/><line x1="245" y1="163" x2="235" y2="126" stroke="#d4956a" stroke-width="13" stroke-linecap="round"/><ellipse cx="85" cy="163" rx="22" ry="8" fill="#b87848"/><line x1="85" y1="163" x2="95" y2="122" stroke="#d4956a" stroke-width="14" stroke-linecap="round"/><line x1="95" y1="122" x2="162" y2="112" stroke="#d4956a" stroke-width="13" stroke-linecap="round"/><path d="M 195 112 Q 218 99 240 106 Q 252 116 248 129 Q 232 136 212 131 Q 192 122 195 112" fill="rgba(200,240,96,0.3)" stroke="#c8f060" stroke-width="1.5" stroke-dasharray="4,2"/><rect x="148" y="62" width="36" height="52" rx="9" fill="#2d4a3e"/><circle cx="166" cy="50" r="15" fill="#d4956a"/><line x1="150" y1="72" x2="115" y2="26" stroke="#d4956a" stroke-width="9" stroke-linecap="round"/><line x1="180" y1="70" x2="215" y2="24" stroke="#d4956a" stroke-width="9" stroke-linecap="round"/><text x="165" y="14" text-anchor="middle" fill="#f0c860" font-size="9" font-family="DM Sans">reach: up · side · rotate</text></svg>`},
+
+  hipFlossing: { name:"Hip Flossing", duration:45, sides:false, target:["hip capsule","ankle","Achilles"], type:"dynamic",
+    cue:"Deep squat, shift side to side. Hits hip capsule and ankle simultaneously. Critical for your Achilles chain. Keep heels down.",
+    points:["Start in deep squat, feet shoulder width or wider","Shift weight right — left leg extends","Hold 2-3 seconds at each end","Shift left — right leg extends","Keep heels down as much as possible","Slight toe-out if heels won't stay flat"],
+    svg:`<svg viewBox="0 0 300 180" xmlns="http://www.w3.org/2000/svg"><rect width="300" height="180" fill="#12140f"/><line x1="20" y1="168" x2="280" y2="168" stroke="#2a2b27" stroke-width="2"/><ellipse cx="48" cy="163" rx="20" ry="7" fill="#b87848"/><ellipse cx="272" cy="163" rx="20" ry="7" fill="#b87848"/><line x1="48" y1="163" x2="155" y2="130" stroke="#d4956a" stroke-width="13" stroke-linecap="round"/><line x1="272" y1="163" x2="210" y2="124" stroke="#d4956a" stroke-width="15" stroke-linecap="round"/><path d="M 190 120 Q 218 106 244 114 Q 256 124 252 137 Q 232 146 208 142 Q 188 134 190 120" fill="rgba(200,240,96,0.25)" stroke="#c8f060" stroke-width="1.5" stroke-dasharray="4,2"/><ellipse cx="182" cy="127" rx="36" ry="13" fill="#1a3a2a"/><rect x="164" y="76" width="36" height="53" rx="9" fill="#2d4a3e"/><circle cx="182" cy="64" r="16" fill="#d4956a"/><line x1="167" y1="96" x2="138" y2="119" stroke="#d4956a" stroke-width="8" stroke-linecap="round"/><path d="M 80 56 Q 170 40 260 56" stroke="#f0c860" stroke-width="1.5" fill="none" stroke-dasharray="4,3"/><text x="170" y="36" text-anchor="middle" fill="#f0c860" font-size="9" font-family="DM Sans">shift side to side · 2-3 sec each</text></svg>`},
+
+  squatToKickout: { name:"Squat to Kick Out", duration:40, sides:false, target:["hip flexor","hamstring","ankle"], type:"dynamic",
+    cue:"Deep squat → shift to one side, kick opposite leg straight out. Alternates squat loading with hamstring stretch.",
+    points:["Start in deep squat, hands together in front","Shift weight to right foot","Kick left leg straight out to side","Hold 2 seconds — feel hamstring stretch","Return and repeat other side","Grounded heel stays down on loaded side"],
+    svg:`<svg viewBox="0 0 300 180" xmlns="http://www.w3.org/2000/svg"><rect width="300" height="180" fill="#12140f"/><line x1="20" y1="168" x2="280" y2="168" stroke="#2a2b27" stroke-width="2"/><ellipse cx="225" cy="163" rx="20" ry="8" fill="#b87848"/><line x1="225" y1="163" x2="195" y2="124" stroke="#d4956a" stroke-width="15" stroke-linecap="round"/><line x1="185" y1="127" x2="55" y2="137" stroke="#d4956a" stroke-width="13" stroke-linecap="round"/><ellipse cx="48" cy="137" rx="18" ry="7" fill="#b87848"/><path d="M 48 130 Q 90 116 145 124 Q 168 129 172 139 Q 145 149 95 146 Q 58 142 48 130" fill="rgba(200,240,96,0.25)" stroke="#c8f060" stroke-width="1.5" stroke-dasharray="4,2"/><ellipse cx="188" cy="127" rx="32" ry="13" fill="#1a3a2a"/><rect x="172" y="76" width="36" height="53" rx="9" fill="#2d4a3e"/><circle cx="190" cy="64" r="15" fill="#d4956a"/><text x="45" y="126" fill="#c8f060" font-size="9" font-family="DM Sans">kick out</text><text x="100" y="154" fill="#c8f060" font-size="8" font-family="DM Sans">hamstring</text></svg>`},
+
+  squatRotFold: { name:"Squat to Rotational Fold", duration:40, sides:false, target:["thoracic","hip ER","groin"], type:"dynamic",
+    cue:"Deep squat → drop one elbow to same-side knee, reach other arm to ceiling. Opens thoracic rotation and hip ER together.",
+    points:["Deep squat, elbows inside knees","Drop right elbow to right knee, rotate left arm up","Follow hand with eyes — look up","Hold 2 seconds at top of rotation","Return to center and switch sides","Breathe out as you rotate"],
+    svg:`<svg viewBox="0 0 300 180" xmlns="http://www.w3.org/2000/svg"><rect width="300" height="180" fill="#12140f"/><line x1="20" y1="168" x2="280" y2="168" stroke="#2a2b27" stroke-width="2"/><ellipse cx="100" cy="163" rx="20" ry="8" fill="#b87848"/><ellipse cx="240" cy="163" rx="20" ry="8" fill="#b87848"/><line x1="100" y1="163" x2="138" y2="126" stroke="#d4956a" stroke-width="14" stroke-linecap="round"/><line x1="240" y1="163" x2="202" y2="126" stroke="#d4956a" stroke-width="14" stroke-linecap="round"/><ellipse cx="170" cy="124" rx="38" ry="13" fill="#1a3a2a"/><line x1="170" y1="124" x2="192" y2="89" stroke="#2d4a3e" stroke-width="26" stroke-linecap="round"/><circle cx="200" cy="77" r="15" fill="#d4956a"/><line x1="190" y1="94" x2="206" y2="122" stroke="#d4956a" stroke-width="10" stroke-linecap="round"/><line x1="185" y1="96" x2="252" y2="42" stroke="#d4956a" stroke-width="10" stroke-linecap="round"/><ellipse cx="257" cy="38" rx="12" ry="9" fill="#d4956a"/><text x="260" y="30" fill="#c8f060" font-size="9" font-family="DM Sans">reach up</text></svg>`},
+
+  heelSitSpineGlide: { name:"Heel Sit + Spine Glides", duration:45, sides:false, target:["anterior ankle","spine","foot top"], type:"dynamic",
+    cue:"Sit on heels, glide forward into child's pose, press back up. Anterior ankle work combined with spinal mobility.",
+    points:["Kneel, sit back onto heels with tops of feet flat","Hands on floor in front","Glide forward — lower chest toward floor","Press back up and lift chest — gentle arch","Sit back and repeat","Sitting on heels IS the anterior ankle work"],
+    svg:`<svg viewBox="0 0 300 180" xmlns="http://www.w3.org/2000/svg"><rect width="300" height="180" fill="#12140f"/><line x1="20" y1="168" x2="280" y2="168" stroke="#2a2b27" stroke-width="2"/><rect x="105" y="158" width="130" height="10" rx="5" fill="#b87848"/><path d="M 108 152 Q 170 144 232 152 Q 232 166 170 168 Q 108 166 108 152" fill="rgba(200,240,96,0.25)" stroke="#c8f060" stroke-width="1.5" stroke-dasharray="4,2"/><text x="170" y="142" text-anchor="middle" fill="#c8f060" font-size="8" font-family="DM Sans">tops of feet flat</text><rect x="122" y="122" width="56" height="32" rx="8" fill="#d4956a"/><line x1="145" y1="122" x2="162" y2="90" stroke="#d4956a" stroke-width="14" stroke-linecap="round"/><line x1="195" y1="124" x2="178" y2="90" stroke="#d4956a" stroke-width="14" stroke-linecap="round"/><ellipse cx="170" cy="88" rx="28" ry="12" fill="#1a3a2a"/><rect x="152" y="38" width="36" height="52" rx="9" fill="#2d4a3e"/><circle cx="170" cy="26" r="16" fill="#d4956a"/><ellipse cx="98" cy="120" rx="13" ry="7" fill="#d4956a"/><ellipse cx="242" cy="120" rx="13" ry="7" fill="#d4956a"/><text x="188" y="62" fill="#f0c860" font-size="8" font-family="DM Sans">glide fwd</text><text x="188" y="73" fill="#f0c860" font-size="8" font-family="DM Sans">↕ then back</text></svg>`},
+
+  elbowWings: { name:"Elbow Wings", duration:40, sides:false, target:["thoracic","scapular","shoulder"], type:"dynamic",
+    cue:"Hands behind head, elbows wide. Rotate one elbow up toward the ceiling. Classic thoracic and scapular drill.",
+    points:["Stand or sit tall, hands interlaced behind head","Elbows wide to the sides","Rotate right elbow up toward the ceiling","Follow with eyes — look up at the elbow","Return to center and repeat left side","8-10 each side, smooth and controlled"],
+    svg:`<svg viewBox="0 0 300 180" xmlns="http://www.w3.org/2000/svg"><rect width="300" height="180" fill="#12140f"/><line x1="20" y1="168" x2="280" y2="168" stroke="#2a2b27" stroke-width="2"/><ellipse cx="182" cy="164" rx="18" ry="7" fill="#b87848"/><ellipse cx="206" cy="164" rx="18" ry="7" fill="#b87848"/><line x1="182" y1="164" x2="180" y2="122" stroke="#d4956a" stroke-width="12" stroke-linecap="round"/><line x1="206" y1="164" x2="204" y2="122" stroke="#d4956a" stroke-width="12" stroke-linecap="round"/><ellipse cx="192" cy="122" rx="26" ry="12" fill="#1a3a2a"/><rect x="174" y="70" width="36" height="54" rx="9" fill="#2d4a3e"/><circle cx="192" cy="58" r="16" fill="#d4956a"/><path d="M 160 76 Q 144 60 160 52 Q 192 44 224 52 Q 240 60 224 76" stroke="#d4956a" stroke-width="8" fill="none" stroke-linecap="round"/><circle cx="142" cy="76" r="10" fill="#d4956a"/><line x1="224" y1="76" x2="265" y2="30" stroke="#d4956a" stroke-width="9" stroke-linecap="round"/><circle cx="268" cy="27" r="10" fill="#d4956a"/><path d="M 228 74 Q 262 52 265 28" stroke="#c8f060" stroke-width="2" fill="none" stroke-dasharray="5,3"/><path d="M 180 72 Q 195 62 214 70 Q 224 82 220 96 Q 205 102 184 98 Q 168 90 180 72" fill="rgba(200,240,96,0.2)" stroke="#c8f060" stroke-width="1.5" stroke-dasharray="4,2"/><text x="272" y="22" fill="#c8f060" font-size="9" font-family="DM Sans">up</text></svg>`},
+
+  downDogMarch: { name:"Down Dog March", duration:45, sides:false, target:["calf","Achilles","hamstring","shoulder"], type:"dynamic",
+    cue:"Alternate pressing each heel down while the other knee bends. Dynamically loads the Achilles chain. Hold each press for 2 breaths.",
+    points:["Downward dog — hips up, heels reaching down","Press right heel toward floor — straighten right leg","Bend left knee, let left heel rise","Alternate in a slow march","Hold each press for 2 breaths","Arms straight, head between arms"],
+    svg:`<svg viewBox="0 0 300 180" xmlns="http://www.w3.org/2000/svg"><rect width="300" height="180" fill="#12140f"/><line x1="20" y1="168" x2="280" y2="168" stroke="#2a2b27" stroke-width="2"/><ellipse cx="65" cy="138" rx="15" ry="7" fill="#d4956a"/><ellipse cx="98" cy="138" rx="15" ry="7" fill="#d4956a"/><line x1="65" y1="138" x2="155" y2="68" stroke="#d4956a" stroke-width="10" stroke-linecap="round"/><line x1="98" y1="138" x2="158" y2="68" stroke="#d4956a" stroke-width="10" stroke-linecap="round"/><circle cx="158" cy="62" r="18" fill="#1a3a2a"/><line x1="162" y1="76" x2="242" y2="154" stroke="#c8f060" stroke-width="13" stroke-linecap="round"/><ellipse cx="245" cy="157" rx="20" ry="7" fill="#c8f060" opacity="0.7"/><path d="M 218 142 Q 235 130 248 142 Q 252 155 244 163 Q 232 167 220 160 Q 212 150 218 142" fill="rgba(200,240,96,0.3)" stroke="#c8f060" stroke-width="1.5" stroke-dasharray="4,2"/><line x1="160" y1="76" x2="190" y2="122" stroke="#d4956a" stroke-width="12" stroke-linecap="round" opacity="0.6"/><line x1="190" y1="122" x2="200" y2="150" stroke="#d4956a" stroke-width="11" stroke-linecap="round" opacity="0.5"/><ellipse cx="202" cy="153" rx="16" ry="6" fill="#b87848" opacity="0.5"/><text x="252" y="168" fill="#c8f060" font-size="8" font-family="DM Sans">press heel</text></svg>`},
+
+  downDogRotation: { name:"Down Dog Rotation", duration:40, sides:true, target:["thoracic","posterior shoulder"], type:"dynamic",
+    cue:"Down dog → thread one arm under your body toward the opposite wall. Opens thoracic rotation and posterior shoulder together.",
+    points:["Start in downward dog","Bend one arm, thread other arm under body","Reach that hand toward opposite wall","Let shoulder lower toward floor","Hold 2-3 breaths — feel thoracic rotation","Return and repeat other side"],
+    svg:`<svg viewBox="0 0 300 180" xmlns="http://www.w3.org/2000/svg"><rect width="300" height="180" fill="#12140f"/><line x1="20" y1="168" x2="280" y2="168" stroke="#2a2b27" stroke-width="2"/><ellipse cx="238" cy="158" rx="18" ry="7" fill="#b87848"/><ellipse cx="268" cy="158" rx="18" ry="7" fill="#b87848"/><line x1="238" y1="158" x2="175" y2="75" stroke="#d4956a" stroke-width="12" stroke-linecap="round"/><line x1="268" y1="158" x2="182" y2="75" stroke="#d4956a" stroke-width="11" stroke-linecap="round" opacity="0.7"/><circle cx="175" cy="68" r="17" fill="#1a3a2a"/><line x1="168" y1="80" x2="112" y2="134" stroke="#d4956a" stroke-width="10" stroke-linecap="round"/><ellipse cx="106" cy="137" rx="13" ry="6" fill="#d4956a"/><line x1="174" y1="82" x2="54" y2="122" stroke="#c8f060" stroke-width="9" stroke-linecap="round"/><ellipse cx="48" cy="124" rx="12" ry="6" fill="#c8f060" opacity="0.8"/><path d="M 148 70 Q 123 54 103 67" stroke="#c8f060" stroke-width="1.5" fill="none" stroke-dasharray="3,2"/><text x="38" y="112" fill="#c8f060" font-size="9" font-family="DM Sans">thread</text></svg>`},
+
+  thoracicExtension: { name:"Thoracic Extension", duration:60, sides:false, target:["thoracic spine","shoulder health","posture"], type:"static",
+    cue:"Counteracts desk posture. Block at MID-back only — not lower back. Gravity opens the chest. Directly supports shoulder health.",
+    points:["Lie on back, place block or rolled towel under MID-back","Arms cross over chest or extend overhead","Let gravity open chest toward ceiling","Deep breaths — each inhale opens more","Move block up/down to find tightest spot","Should feel like relief, not sharp pain"],
+    svg:`<svg viewBox="0 0 300 180" xmlns="http://www.w3.org/2000/svg"><rect width="300" height="180" fill="#12140f"/><line x1="20" y1="168" x2="280" y2="168" stroke="#2a2b27" stroke-width="2"/><ellipse cx="255" cy="163" rx="18" ry="7" fill="#b87848"/><ellipse cx="282" cy="163" rx="18" ry="7" fill="#b87848"/><line x1="255" y1="163" x2="238" y2="134" stroke="#d4956a" stroke-width="13" stroke-linecap="round"/><line x1="282" y1="163" x2="265" y2="134" stroke="#d4956a" stroke-width="13" stroke-linecap="round"/><rect x="188" y="125" width="72" height="24" rx="6" fill="#243520" stroke="#c8f060" stroke-width="1.5"/><text x="224" y="121" text-anchor="middle" fill="#c8f060" font-size="8" font-family="DM Sans">yoga block — MID-back</text><line x1="262" y1="132" x2="188" y2="125" stroke="#d4956a" stroke-width="12" stroke-linecap="round"/><line x1="188" y1="125" x2="118" y2="114" stroke="#2d4a3e" stroke-width="24" stroke-linecap="round"/><rect x="85" y="104" width="38" height="18" rx="6" fill="#2d4a3e"/><circle cx="68" cy="122" r="16" fill="#d4956a"/><line x1="87" y1="108" x2="58" y2="82" stroke="#d4956a" stroke-width="9" stroke-linecap="round"/><line x1="102" y1="106" x2="78" y2="79" stroke="#d4956a" stroke-width="9" stroke-linecap="round"/><path d="M 120 104 Q 152 88 178 98 Q 188 108 185 120 Q 165 128 138 124 Q 115 116 120 104" fill="rgba(200,240,96,0.25)" stroke="#c8f060" stroke-width="1.5" stroke-dasharray="4,2"/><text x="150" y="88" fill="#c8f060" font-size="8" font-family="DM Sans">chest opens</text></svg>`},
+
+  posteriorShoulder: { name:"Posterior Shoulder Stretch", duration:30, sides:true, target:["infraspinatus","teres minor"], type:"static",
+    cue:"Your daily non-negotiable for the right shoulder. Targets the infraspinatus and teres minor — the deceleration muscles in your shot.",
+    points:["Bring right arm across chest at shoulder height","Use left hand or forearm to pull right arm closer","Feel stretch in BACK of right shoulder","Do NOT shrug — keep shoulders down","No bouncing — steady hold","30 seconds minimum on right side"],
+    svg:`<svg viewBox="0 0 300 180" xmlns="http://www.w3.org/2000/svg"><rect width="300" height="180" fill="#12140f"/><line x1="20" y1="168" x2="280" y2="168" stroke="#2a2b27" stroke-width="2"/><ellipse cx="182" cy="164" rx="18" ry="7" fill="#b87848"/><ellipse cx="206" cy="164" rx="18" ry="7" fill="#b87848"/><line x1="182" y1="164" x2="180" y2="126" stroke="#d4956a" stroke-width="12" stroke-linecap="round"/><line x1="206" y1="164" x2="204" y2="126" stroke="#d4956a" stroke-width="12" stroke-linecap="round"/><ellipse cx="192" cy="126" rx="26" ry="12" fill="#1a3a2a"/><rect x="174" y="74" width="36" height="54" rx="9" fill="#2d4a3e"/><circle cx="192" cy="62" r="16" fill="#d4956a"/><line x1="208" y1="90" x2="100" y2="90" stroke="#d4956a" stroke-width="10" stroke-linecap="round"/><ellipse cx="95" cy="90" rx="12" ry="8" fill="#d4956a"/><line x1="175" y1="98" x2="108" y2="90" stroke="#d4956a" stroke-width="9" stroke-linecap="round"/><path d="M 206 78 Q 230 68 242 82 Q 247 96 239 107 Q 223 113 206 105 Q 194 96 206 78" fill="rgba(200,240,96,0.35)" stroke="#c8f060" stroke-width="1.5" stroke-dasharray="4,2"/><text x="248" y="70" fill="#c8f060" font-size="8" font-family="DM Sans">posterior</text><text x="248" y="81" fill="#c8f060" font-size="8" font-family="DM Sans">shoulder</text><text x="248" y="92" fill="#9a9b94" font-size="7" font-family="DM Sans">(infraspinatus</text><text x="248" y="102" fill="#9a9b94" font-size="7" font-family="DM Sans">+ teres minor)</text><text x="162" y="52" fill="#f0c860" font-size="8" font-family="DM Sans">shoulders DOWN</text></svg>`},
+
+  ankleFlow: { name:"Ankle Flow (Supine)", duration:45, sides:false, target:["ankle mobility","Achilles","dorsiflexion"], type:"dynamic",
+    cue:"Feet up the wall, circles, flex/point, and the alphabet. Elevation reduces tension for deeper range. Achilles chain work from the bottom up.",
+    points:["Lie on back, feet up on the wall","Circles: 10 slow each direction, each foot","Flex and point: 10 reps — toes toward shin, then away","Write the alphabet with each foot","Inversion/eversion: tilt foot in and out","2-3 minutes total"],
+    svg:`<svg viewBox="0 0 300 180" xmlns="http://www.w3.org/2000/svg"><rect width="300" height="180" fill="#12140f"/><rect x="282" y="15" width="16" height="165" fill="#2a2b27"/><rect x="42" y="108" width="200" height="32" rx="14" fill="#2d4a3e"/><circle cx="30" cy="124" r="18" fill="#d4956a"/><line x1="235" y1="110" x2="282" y2="45" stroke="#d4956a" stroke-width="14" stroke-linecap="round"/><line x1="250" y1="118" x2="282" y2="83" stroke="#d4956a" stroke-width="14" stroke-linecap="round"/><ellipse cx="282" cy="42" rx="9" ry="6" fill="#b87848"/><ellipse cx="282" cy="80" rx="9" ry="6" fill="#b87848"/><path d="M 268 106 Q 278 84 282 60 Q 286 70 282 82 Q 274 100 265 116 Z" fill="rgba(200,240,96,0.2)" stroke="#c8f060" stroke-width="1.2"/><circle cx="282" cy="42" r="16" stroke="#c8f060" stroke-width="1.5" fill="none" stroke-dasharray="4,2"/><text x="248" y="22" fill="#c8f060" font-size="8" font-family="DM Sans">circles +</text><text x="248" y="33" fill="#c8f060" font-size="8" font-family="DM Sans">alphabet</text></svg>`},
+
+  lacrosseFoot: { name:"Lacrosse Ball Foot Roll", duration:60, sides:true, target:["plantar fascia","foot arch","Achilles chain"], type:"self-massage",
+    cue:"Foundation of Achilles chain maintenance. Work from the ground up. Extra time in the arch — that's where most tension hides.",
+    points:["Stand or sit, place ball under foot","Start at heel — slow firm pressure, 10 seconds","Roll through the arch — pause at tight spots","Work up to the ball of the foot","Extra time on inner arch","Standing gives more pressure than seated"],
+    svg:`<svg viewBox="0 0 300 180" xmlns="http://www.w3.org/2000/svg"><rect width="300" height="180" fill="#12140f"/><path d="M 55 130 Q 62 106 88 98 Q 132 90 196 93 Q 238 95 258 110 Q 278 123 272 140 Q 260 150 235 153 Q 188 157 128 153 Q 85 150 65 140 Z" fill="#d4956a" stroke="#b87848" stroke-width="1.5"/><ellipse cx="250" cy="136" rx="22" ry="16" fill="rgba(240,104,96,0.25)" stroke="#f06860" stroke-width="1.5" stroke-dasharray="3,2"/><text x="250" y="134" text-anchor="middle" fill="#f06860" font-size="9" font-family="DM Sans">heel</text><path d="M 148 100 Q 188 93 215 105 Q 222 117 215 130 Q 190 137 152 133 Q 136 125 148 100" fill="rgba(200,240,96,0.3)" stroke="#c8f060" stroke-width="1.5" stroke-dasharray="4,2"/><text x="188" y="118" text-anchor="middle" fill="#c8f060" font-size="9" font-family="DM Sans">arch ← spend time here</text><ellipse cx="96" cy="115" rx="25" ry="16" fill="rgba(240,200,96,0.2)" stroke="#f0c860" stroke-width="1.2" stroke-dasharray="3,2"/><text x="96" y="113" text-anchor="middle" fill="#f0c860" font-size="9" font-family="DM Sans">ball</text><circle cx="182" cy="153" r="14" fill="#2a2b27" stroke="#c8f060" stroke-width="1.5"/><path d="M 82 144 Q 142 134 218 136 Q 244 137 260 132" stroke="#f0c860" stroke-width="2" fill="none" stroke-dasharray="5,3"/></svg>`},
+
+  kneelingShins: { name:"Kneeling Shin Stretch", duration:30, sides:false, target:["anterior ankle","extensor tendons","top of foot"], type:"static",
+    cue:"The neglected half of the Achilles chain. Tops of feet flat on floor. Opens the anterior tibialis — critical for squat depth and landing mechanics.",
+    points:["Kneel, sit back toward your heels","Tops of feet flat on the floor","Slowly sit weight back — feel it on shins and top of foot","Start 10-15 seconds if intense","Never force — opens over weeks","Hands on floor to unload if needed"],
+    svg:`<svg viewBox="0 0 300 180" xmlns="http://www.w3.org/2000/svg"><rect width="300" height="180" fill="#12140f"/><line x1="20" y1="168" x2="280" y2="168" stroke="#2a2b27" stroke-width="2"/><rect x="102" y="158" width="136" height="10" rx="5" fill="#b87848"/><path d="M 105 150 Q 170 142 235 150 Q 235 166 170 168 Q 105 166 105 150" fill="rgba(200,240,96,0.3)" stroke="#c8f060" stroke-width="1.5" stroke-dasharray="4,2"/><text x="170" y="140" text-anchor="middle" fill="#c8f060" font-size="9" font-family="DM Sans">tops of feet flat on floor</text><rect x="120" y="124" width="25" height="34" rx="5" fill="#d4956a"/><rect x="195" y="126" width="25" height="32" rx="5" fill="#d4956a"/><line x1="145" y1="124" x2="162" y2="92" stroke="#d4956a" stroke-width="13" stroke-linecap="round"/><line x1="195" y1="126" x2="178" y2="92" stroke="#d4956a" stroke-width="13" stroke-linecap="round"/><ellipse cx="170" cy="90" rx="28" ry="12" fill="#1a3a2a"/><rect x="152" y="38" width="36" height="54" rx="9" fill="#2d4a3e"/><circle cx="170" cy="26" r="16" fill="#d4956a"/><ellipse cx="98" cy="120" rx="13" ry="7" fill="#d4956a"/><ellipse cx="242" cy="120" rx="13" ry="7" fill="#d4956a"/><text x="170" y="64" text-anchor="middle" fill="#f0c860" font-size="8" font-family="DM Sans">sit back slowly</text></svg>`},
+
+  tibialisRaise: { name:"Tibialis Raise", duration:30, sides:false, target:["tibialis anterior","shin","Achilles load-sharing"], type:"strengthening",
+    cue:"The complement to your calf raises. Weak shins = more Achilles stress. Simple, fast, and non-negotiable.",
+    points:["Stand heels against wall, slight lean back","Lift toes and front of both feet off floor","Hold 2 seconds at top","Lower slowly — don't just drop","15-20 reps, 2 sets","Shoes or barefoot both work"],
+    svg:`<svg viewBox="0 0 300 180" xmlns="http://www.w3.org/2000/svg"><rect width="300" height="180" fill="#12140f"/><line x1="20" y1="168" x2="280" y2="168" stroke="#2a2b27" stroke-width="2"/><rect x="258" y="36" width="13" height="132" fill="#2a2b27"/><text x="265" y="30" fill="#6a6b64" font-size="8" font-family="DM Sans">wall</text><path d="M 132 126 Q 145 114 158 118 Q 165 126 162 152 Q 148 155 136 149 Z" fill="rgba(200,240,96,0.3)" stroke="#c8f060" stroke-width="1.5" stroke-dasharray="4,2"/><path d="M 162 126 Q 175 114 188 118 Q 195 126 192 152 Q 178 155 166 149 Z" fill="rgba(200,240,96,0.3)" stroke="#c8f060" stroke-width="1.5" stroke-dasharray="4,2"/><rect x="130" y="122" width="28" height="46" rx="6" fill="#d4956a"/><rect x="162" y="124" width="28" height="44" rx="6" fill="#d4956a"/><ellipse cx="145" cy="166" rx="17" ry="6" fill="#b87848"/><ellipse cx="175" cy="166" rx="17" ry="6" fill="#b87848"/><path d="M 115 163 Q 128 153 145 158" stroke="#c8f060" stroke-width="8" fill="none" stroke-linecap="round"/><path d="M 148 158 Q 162 151 178 158" stroke="#c8f060" stroke-width="8" fill="none" stroke-linecap="round"/><rect x="148" y="66" width="38" height="58" rx="9" fill="#2d4a3e"/><circle cx="167" cy="54" r="16" fill="#d4956a"/><text x="111" y="132" fill="#c8f060" font-size="8" font-family="DM Sans">tibialis</text><text x="111" y="143" fill="#c8f060" font-size="8" font-family="DM Sans">anterior</text><text x="164" y="180" text-anchor="middle" fill="#9a9b94" font-size="8" font-family="DM Sans">heels stay down</text></svg>`},
+
+  catCow: { name:"Cat-Cow", duration:40, sides:false, target:["spine","thoracic","lumbar"], type:"dynamic",
+    cue:"Simplest spinal mobility drill. Alternate arching and rounding. Breath drives the motion — don't rush it.",
+    points:["Hands and knees, wrists under shoulders, knees under hips","Cow: inhale — drop belly, lift chest and tailbone","Cat: exhale — round back, tuck tailbone, drop head","Breath drives movement","10 slow rounds — feel each vertebra","Pause at each extreme for one breath"],
+    svg:`<svg viewBox="0 0 300 180" xmlns="http://www.w3.org/2000/svg"><rect width="300" height="180" fill="#12140f"/><line x1="20" y1="168" x2="280" y2="168" stroke="#2a2b27" stroke-width="2"/><ellipse cx="80" cy="128" rx="14" ry="7" fill="#d4956a"/><ellipse cx="220" cy="128" rx="14" ry="7" fill="#d4956a"/><ellipse cx="242" cy="155" rx="14" ry="8" fill="#b87848"/><ellipse cx="268" cy="157" rx="14" ry="8" fill="#b87848"/><path d="M 80 121 Q 150 136 220 121" stroke="#f0c860" stroke-width="14" fill="none" stroke-linecap="round"/><circle cx="65" cy="108" r="13" fill="#d4956a"/><path d="M 225 118 Q 245 104 250 88" stroke="#d4956a" stroke-width="7" fill="none" stroke-linecap="round"/><path d="M 80 121 Q 150 88 220 121" stroke="#c8f060" stroke-width="5" fill="none" stroke-linecap="round" stroke-dasharray="6,4" opacity="0.8"/><circle cx="66" cy="130" r="9" fill="#d4956a" opacity="0.45"/><text x="150" y="160" text-anchor="middle" fill="#f0c860" font-size="9" font-family="DM Sans">COW — inhale, belly drops</text><text x="150" y="76" text-anchor="middle" fill="#c8f060" font-size="9" font-family="DM Sans">CAT — exhale, spine rounds up</text></svg>`},
+
+  childsPose: { name:"Child's Pose", duration:90, sides:false, target:["spine","hips","nervous system"], type:"restorative",
+    cue:"Active unloading — not passive waiting. Breathe into lower back. Every exhale is a release. The anchor of the evening routine.",
+    points:["Kneel, sit hips back toward heels, arms forward","Rest forehead on the mat","Breathe into lower back — feel it expand on inhale","Each exhale — body sinks heavier","Arms extended or alongside body","This is rest — don't rush through it"],
+    svg:`<svg viewBox="0 0 300 180" xmlns="http://www.w3.org/2000/svg"><rect width="300" height="180" fill="#12140f"/><line x1="20" y1="168" x2="280" y2="168" stroke="#2a2b27" stroke-width="2"/><line x1="165" y1="122" x2="52" y2="132" stroke="#d4956a" stroke-width="10" stroke-linecap="round"/><line x1="165" y1="126" x2="56" y2="142" stroke="#d4956a" stroke-width="10" stroke-linecap="round"/><ellipse cx="46" cy="137" rx="16" ry="7" fill="#d4956a"/><circle cx="72" cy="126" r="14" fill="#d4956a"/><path d="M 80 122 Q 128 104 172 112 Q 200 118 202 131 Q 196 142 165 139 Q 128 142 85 136 Z" fill="#2d4a3e"/><ellipse cx="222" cy="142" rx="32" ry="15" fill="#1a3a2a"/><rect x="190" y="142" width="64" height="20" rx="8" fill="#d4956a"/><ellipse cx="222" cy="162" rx="32" ry="8" fill="#b87848"/><path d="M 178 112 Q 178 90 178 74" stroke="#c060f0" stroke-width="1.8" stroke-dasharray="3,2"/><text x="185" y="72" fill="#c060f0" font-size="8" font-family="DM Sans">breathe</text><text x="185" y="83" fill="#c060f0" font-size="8" font-family="DM Sans">into back</text></svg>`},
+
+  figureFour: { name:"Supine Figure Four", duration:60, sides:true, target:["piriformis","glute","hip ER"], type:"static",
+    cue:"Highly effective piriformis stretch. Flex that foot to protect the knee. Great for sitting recovery and pre-sleep.",
+    points:["Lie on back, knees bent, feet flat","Cross right ankle over left knee (figure 4 shape)","Flex right foot — protects the knee","Lift left foot, pull both legs toward chest","Feel it deep in right glute and hip","Breathe into the tight spot"],
+    svg:`<svg viewBox="0 0 300 180" xmlns="http://www.w3.org/2000/svg"><rect width="300" height="180" fill="#12140f"/><rect x="55" y="100" width="165" height="32" rx="14" fill="#2d4a3e"/><circle cx="44" cy="116" r="18" fill="#d4956a"/><line x1="200" y1="103" x2="218" y2="65" stroke="#d4956a" stroke-width="13" stroke-linecap="round"/><ellipse cx="222" cy="61" rx="12" ry="8" fill="#b87848"/><line x1="192" y1="102" x2="225" y2="84" stroke="#c8f060" stroke-width="11" stroke-linecap="round"/><ellipse cx="228" cy="82" rx="12" ry="8" fill="#c8f060" opacity="0.6"/><line x1="218" y1="72" x2="225" y2="84" stroke="#c8f060" stroke-width="3" stroke-dasharray="3,2"/><line x1="145" y1="104" x2="205" y2="76" stroke="#d4956a" stroke-width="9" stroke-linecap="round"/><line x1="155" y1="108" x2="215" y2="80" stroke="#d4956a" stroke-width="9" stroke-linecap="round"/><path d="M 195 94 Q 215 84 232 91 Q 240 101 235 114 Q 220 121 200 114 Q 188 106 195 94" fill="rgba(200,240,96,0.3)" stroke="#c8f060" stroke-width="1.5" stroke-dasharray="4,2"/><text x="245" y="92" fill="#c8f060" font-size="8" font-family="DM Sans">ankle on</text><text x="245" y="103" fill="#c8f060" font-size="8" font-family="DM Sans">knee</text><text x="245" y="120" fill="#9a9b94" font-size="7" font-family="DM Sans">FLEX foot</text></svg>`},
+
+  legsUpWall: { name:"Legs Up Wall", duration:150, sides:false, target:["Achilles recovery","calf decompression","nervous system"], type:"restorative",
+    cue:"Passive recovery for the entire Achilles chain. Gravity decompresses the tendon. Also a powerful parasympathetic activator. One of the best Achilles recovery tools.",
+    points:["Scoot hips close to the wall","Legs rest straight up the wall — don't need to be perfect","Arms relaxed at sides or on belly","Close your eyes","Just breathe — no effort required","Stay the full 2.5 minutes"],
+    svg:`<svg viewBox="0 0 300 180" xmlns="http://www.w3.org/2000/svg"><rect width="300" height="180" fill="#12140f"/><rect x="280" y="8" width="18" height="170" fill="#2a2b27"/><text x="280" y="5" fill="#6a6b64" font-size="7" font-family="DM Sans">wall</text><rect x="42" y="112" width="202" height="32" rx="14" fill="#2d4a3e"/><circle cx="30" cy="128" r="18" fill="#d4956a"/><line x1="238" y1="114" x2="280" y2="43" stroke="#d4956a" stroke-width="14" stroke-linecap="round"/><line x1="253" y1="122" x2="280" y2="83" stroke="#d4956a" stroke-width="14" stroke-linecap="round"/><ellipse cx="280" cy="40" rx="9" ry="6" fill="#b87848"/><ellipse cx="280" cy="80" rx="9" ry="6" fill="#b87848"/><path d="M 266 100 Q 278 76 280 52 Q 284 62 280 74 Q 270 92 263 112 Z" fill="rgba(200,240,96,0.2)" stroke="#c8f060" stroke-width="1.2"/><text x="296" y="62" fill="#c8f060" font-size="7" font-family="DM Sans">Achilles</text><text x="296" y="73" fill="#c8f060" font-size="7" font-family="DM Sans">decompresses</text><text x="88" y="96" fill="#6a6b64" font-size="18" font-family="DM Serif Display" font-style="italic">zzz</text></svg>`},
+
+  spinalTwist: { name:"Supine Spinal Twist", duration:45, sides:true, target:["thoracic","lumbar","hip"], type:"restorative",
+    cue:"Let gravity do the work — don't force the knee down. T-arms, knee drops across. Pure decompression.",
+    points:["Lie on back, arms in T position","Pull right knee to chest, let it fall across to left","Left hand rests gently on right knee","Right arm stays on floor","Look right if comfortable","Let knee drop naturally — no forcing"],
+    svg:`<svg viewBox="0 0 300 180" xmlns="http://www.w3.org/2000/svg"><rect width="300" height="180" fill="#12140f"/><rect x="48" y="100" width="165" height="32" rx="14" fill="#2d4a3e"/><circle cx="36" cy="116" r="18" fill="#d4956a"/><line x1="210" y1="114" x2="282" y2="114" stroke="#d4956a" stroke-width="10" stroke-linecap="round"/><line x1="50" y1="114" x2="20" y2="114" stroke="#d4956a" stroke-width="10" stroke-linecap="round"/><line x1="205" y1="106" x2="148" y2="148" stroke="#c8f060" stroke-width="13" stroke-linecap="round"/><ellipse cx="145" cy="152" rx="14" ry="8" fill="#c8f060" opacity="0.7"/><line x1="195" y1="106" x2="255" y2="136" stroke="#d4956a" stroke-width="12" stroke-linecap="round" opacity="0.5"/><ellipse cx="155" cy="142" rx="13" ry="8" fill="#d4956a" opacity="0.7"/><path d="M 175 92 Q 155 79 140 84" stroke="#c060f0" stroke-width="1.5" fill="none" stroke-dasharray="3,2"/><text x="114" y="76" fill="#c060f0" font-size="8" font-family="DM Sans">gravity drops it</text></svg>`},
+
+  diagBreathing: { name:"Diaphragmatic Breathing", duration:120, sides:false, target:["nervous system","vagus nerve","sleep prep"], type:"breathwork",
+    cue:"The final signal. Extended exhale activates the parasympathetic response via the vagus nerve. This tells your body the day is over.",
+    points:["Lie comfortably, hand on chest, hand on belly","Inhale through nose 4 counts — belly rises, chest stays still","Hold 1 count","Exhale through mouth 6 counts — fully empty","Longer exhale than inhale = vagus nerve activation","If mind wanders, return to counting — that's the practice"],
+    svg:`<svg viewBox="0 0 300 180" xmlns="http://www.w3.org/2000/svg"><rect width="300" height="180" fill="#12140f"/><rect x="48" y="112" width="205" height="34" rx="14" fill="#2d4a3e"/><circle cx="36" cy="129" r="18" fill="#d4956a"/><rect x="248" y="114" width="72" height="26" rx="10" fill="#d4956a"/><ellipse cx="185" cy="110" rx="22" ry="10" fill="#d4956a"/><ellipse cx="118" cy="110" rx="18" ry="9" fill="#d4956a" opacity="0.6"/><rect x="62" y="44" width="80" height="38" rx="8" fill="rgba(192,96,240,0.12)" stroke="#c060f0" stroke-width="1"/><rect x="158" y="44" width="80" height="38" rx="8" fill="rgba(192,96,240,0.08)" stroke="#c060f0" stroke-width="1"/><text x="102" y="62" text-anchor="middle" fill="#c060f0" font-size="10" font-family="DM Sans" font-weight="500">4 counts IN</text><text x="102" y="74" text-anchor="middle" fill="#9a9b94" font-size="8" font-family="DM Sans">through nose</text><text x="198" y="62" text-anchor="middle" fill="#c060f0" font-size="10" font-family="DM Sans" font-weight="500">6 counts OUT</text><text x="198" y="74" text-anchor="middle" fill="#9a9b94" font-size="8" font-family="DM Sans">through mouth</text><line x1="185" y1="110" x2="185" y2="88" stroke="#c060f0" stroke-width="1.8" stroke-dasharray="3,2"/><text x="192" y="86" fill="#c060f0" font-size="8" font-family="DM Sans">belly rises</text><text x="170" y="26" text-anchor="middle" fill="#f0c860" font-size="9" font-family="DM Sans">Extended exhale activates vagus nerve</text></svg>`},
+
+  wideHingeRot: { name:"Wide Hinge Rotation", duration:40, sides:false, target:["thoracic","hamstring","hip"], type:"dynamic",
+    cue:"Wide stance, hinge forward, rotate one arm to the ceiling. Opens thoracic rotation through the hamstring and hinge position.",
+    points:["Feet wider than shoulder width","Hinge forward at hips, hands hanging","Bend one knee, rotate torso toward that side","Reach top arm up toward ceiling","Follow with eyes","5 rotations each side"],
+    svg:`<svg viewBox="0 0 300 180" xmlns="http://www.w3.org/2000/svg"><rect width="300" height="180" fill="#12140f"/><line x1="20" y1="168" x2="280" y2="168" stroke="#2a2b27" stroke-width="2"/><ellipse cx="72" cy="165" rx="20" ry="7" fill="#b87848"/><ellipse cx="268" cy="165" rx="20" ry="7" fill="#b87848"/><line x1="72" y1="165" x2="138" y2="112" stroke="#d4956a" stroke-width="13" stroke-linecap="round"/><line x1="268" y1="165" x2="202" y2="112" stroke="#d4956a" stroke-width="13" stroke-linecap="round" opacity="0.6"/><line x1="170" y1="110" x2="188" y2="74" stroke="#2d4a3e" stroke-width="24" stroke-linecap="round"/><circle cx="196" cy="62" r="15" fill="#d4956a"/><line x1="188" y1="78" x2="168" y2="96" stroke="#d4956a" stroke-width="9" stroke-linecap="round"/><line x1="155" y1="76" x2="185" y2="74" stroke="#d4956a" stroke-width="9" stroke-linecap="round"/><line x1="186" y1="78" x2="245" y2="32" stroke="#d4956a" stroke-width="10" stroke-linecap="round"/><ellipse cx="250" cy="28" rx="12" ry="9" fill="#d4956a"/><text x="255" y="22" fill="#c8f060" font-size="9" font-family="DM Sans">reach up</text></svg>`},
+
+  adductorStretch: { name:"Adductor Stretch", duration:45, sides:true, target:["adductors","inner thigh","groin"], type:"static",
+    cue:"Critical for basketball. Lateral cutting and defensive shuffling load the groin hard. Get into this daily.",
+    points:["Wide stance, toes forward or slightly out","Shift weight to one side — bend that knee","Other leg straight — feel inner thigh","Hands on bent knee for support","Sink slowly — no bouncing","Hold then shift to other side"],
+    svg:`<svg viewBox="0 0 300 180" xmlns="http://www.w3.org/2000/svg"><rect width="300" height="180" fill="#12140f"/><line x1="20" y1="168" x2="280" y2="168" stroke="#2a2b27" stroke-width="2"/><ellipse cx="55" cy="165" rx="22" ry="8" fill="#b87848"/><ellipse cx="248" cy="165" rx="22" ry="8" fill="#b87848"/><line x1="55" y1="165" x2="155" y2="119" stroke="#d4956a" stroke-width="13" stroke-linecap="round"/><path d="M 55 158 Q 95 138 143 124 Q 160 122 170 132 Q 155 148 115 156 Q 75 162 55 158" fill="rgba(200,240,96,0.3)" stroke="#c8f060" stroke-width="1.5" stroke-dasharray="4,2"/><line x1="248" y1="165" x2="195" y2="122" stroke="#d4956a" stroke-width="15" stroke-linecap="round"/><ellipse cx="172" cy="122" rx="32" ry="13" fill="#1a3a2a"/><rect x="155" y="70" width="36" height="54" rx="9" fill="#2d4a3e"/><circle cx="173" cy="58" r="15" fill="#d4956a"/><line x1="157" y1="92" x2="192" y2="116" stroke="#d4956a" stroke-width="9" stroke-linecap="round"/><text x="62" y="148" fill="#c8f060" font-size="9" font-family="DM Sans">inner thigh</text></svg>`},
+
+  gluteBridge: { name:"Glute Bridge", duration:40, sides:false, target:["glutes","hip stability","knee protection"], type:"activation",
+    cue:"Hip strength protects the knee. Reduces valgus collapse on landing. Squeeze HARD at the top. Essential pre-workout activation.",
+    points:["Lie on back, knees bent, feet flat, hip-width apart","Press through both heels, drive hips to ceiling","Squeeze glutes hard at top — 2 second hold","Lower slowly — don't drop","Keep core braced throughout","12-15 reps"],
+    svg:`<svg viewBox="0 0 300 180" xmlns="http://www.w3.org/2000/svg"><rect width="300" height="180" fill="#12140f"/><line x1="20" y1="168" x2="280" y2="168" stroke="#2a2b27" stroke-width="2"/><ellipse cx="195" cy="165" rx="20" ry="7" fill="#b87848"/><ellipse cx="228" cy="165" rx="20" ry="7" fill="#b87848"/><line x1="195" y1="165" x2="178" y2="130" stroke="#d4956a" stroke-width="13" stroke-linecap="round"/><line x1="228" y1="165" x2="211" y2="130" stroke="#d4956a" stroke-width="13" stroke-linecap="round"/><path d="M 175 128 Q 195 98 212 128" stroke="#c8f060" stroke-width="14" fill="none" stroke-linecap="round"/><path d="M 178 120 Q 196 104 213 120 Q 213 135 196 137 Q 179 135 178 120" fill="rgba(200,240,96,0.2)" stroke="#c8f060" stroke-width="1.2"/><rect x="55" y="126" width="115" height="22" rx="6" fill="#2d4a3e"/><circle cx="46" cy="136" r="15" fill="#d4956a"/><line x1="175" y1="128" x2="112" y2="130" stroke="#2d4a3e" stroke-width="12" stroke-linecap="round"/><line x1="195" y1="108" x2="195" y2="88" stroke="#c8f060" stroke-width="2" stroke-dasharray="2,2"/><text x="200" y="86" fill="#c8f060" font-size="9" font-family="DM Sans">SQUEEZE</text></svg>`},
+
+
+  supineHamstring: { name:"Supine Hamstring Stretch", duration:45, sides:true, target:["hamstring","posterior chain"], type:"static",
+    cue:"The most overlooked piece of the daily minimum. Hamstrings that are chronically tight affect your hip hinge, your squat depth, your Achilles chain, and your lower back. Strap around the foot, leg straight, gentle pull.",
+    points:["Lie on back, loop strap around one foot","Keep the other leg flat on the floor","Gently pull the strap to raise the leg toward ceiling","Keep the raised leg as straight as comfortable — soft knee is fine","Feel the stretch in the back of the thigh, not the knee","30 sec each side minimum — breathe into the stretch"],
+    svg:`<svg viewBox="0 0 300 180" xmlns="http://www.w3.org/2000/svg"><rect width="300" height="180" fill="#12140f"/><rect x="42" y="108" width="200" height="32" rx="14" fill="#2d4a3e"/><circle cx="30" cy="124" r="18" fill="#d4956a"/><rect x="240" y="110" width="72" height="26" rx="10" fill="#d4956a"/><line x1="236" y1="110" x2="192" y2="42" stroke="#d4956a" stroke-width="14" stroke-linecap="round"/><ellipse cx="190" cy="38" rx="10" ry="7" fill="#b87848"/><path d="M 236 100 Q 240 70 190 38" stroke="#c8f060" stroke-width="3" fill="none" stroke-dasharray="5,3"/><ellipse cx="193" cy="36" rx="20" ry="8" fill="#b87848" opacity="0.6"/><text x="215" y="28" fill="#c8f060" font-size="8" font-family="DM Sans">strap</text><path d="M 218 100 Q 226 75 196 42" stroke="#c8f060" stroke-width="2" fill="none" stroke-dasharray="4,2"/><path d="M 140 100 Q 160 80 190 40 Q 220 80 240 100" stroke="rgba(200,240,96,0.2)" stroke-width="14" fill="none" stroke-linecap="round"/><text x="135" y="95" fill="#c8f060" font-size="8" font-family="DM Sans">hamstring</text><text x="170" y="150" text-anchor="middle" fill="#9a9b94" font-size="9" font-family="DM Sans">Leg toward ceiling · Soft knee ok · Breathe into it</text></svg>`},
+  tke: { name:"Terminal Knee Extension", duration:35, sides:true, target:["VMO","inner quad","knee stability"], type:"activation",
+    cue:"Activates the VMO (inner teardrop quad) — critical for knee tracking. Band loops at knee height behind you.",
+    points:["Band looped at knee height behind you, step into it","Band sits behind the knee with light tension","Slight hip hinge, soft bend in both knees","Extend banded knee against the band","Feel inner quad (VMO) fire at top","15 slow reps each side"],
+    svg:`<svg viewBox="0 0 300 180" xmlns="http://www.w3.org/2000/svg"><rect width="300" height="180" fill="#12140f"/><line x1="20" y1="168" x2="280" y2="168" stroke="#2a2b27" stroke-width="2"/><rect x="28" y="80" width="14" height="88" rx="3" fill="#2a2b27"/><text x="22" y="76" fill="#6a6b64" font-size="7" font-family="DM Sans">anchor</text><path d="M 42 116 Q 88 110 115 119" stroke="#f0c860" stroke-width="3" fill="none" stroke-dasharray="5,3"/><rect x="130" y="66" width="48" height="62" rx="8" fill="#2d4a3e"/><circle cx="154" cy="54" r="15" fill="#d4956a"/><line x1="140" y1="126" x2="120" y2="148" stroke="#d4956a" stroke-width="13" stroke-linecap="round"/><ellipse cx="118" cy="147" rx="12" ry="5" fill="#b87848"/><line x1="158" y1="126" x2="165" y2="148" stroke="#d4956a" stroke-width="13" stroke-linecap="round"/><ellipse cx="165" cy="147" rx="12" ry="5" fill="#b87848"/><ellipse cx="148" cy="128" rx="12" ry="10" fill="rgba(240,200,96,0.3)" stroke="#f0c860" stroke-width="1.5"/><path d="M 135 128 Q 138 108 152 106 Q 162 108 162 122 Q 160 132 148 132 Q 136 130 135 128" fill="rgba(200,240,96,0.2)" stroke="#c8f060" stroke-width="1.2"/><text x="100" y="145" fill="#c8f060" font-size="8" font-family="DM Sans">VMO fires</text></svg>`}
+};
+
+const FLOWS = {
+  morning: {
+    label:"Daily Minimum", title:"Morning Essentials", color:"var(--morning)", totalMinutes:"12-15",
+    movements:[
+      {id:'breathReset',section:'OPEN'},
+      {id:'posteriorShoulder',section:'SHOULDER'},
+      {id:'catCow',section:'SPINE'},
+      {id:'ninetyNinetyStatic',section:'HIPS'},
+      {id:'couchStretch',section:'HIPS'},
+      {id:'supineHamstring',section:'HIPS'},
+      {id:'downDogMarch',section:'FULL BODY'},
+      {id:'kneelingShins',section:'ANKLE CHAIN'},
+      {id:'lacrosseFoot',section:'ANKLE CHAIN'},
+      {id:'tibialisRaise',section:'ANKLE CHAIN'}
+    ]
+  },
+  full: {
+    label:"Full Morning", title:"Complete Flow", color:"var(--full)", totalMinutes:"20-25",
+    movements:[
+      {id:'breathReset',section:'OPEN'},
+      {id:'ninetyNinetyStatic',section:'FLOW 1 — GROUND'},
+      {id:'ninetyNinetyIR',section:'FLOW 1 — GROUND'},
+      {id:'ninetyNinetyHurdler',section:'FLOW 1 — GROUND'},
+      {id:'ninetyNinetyRearRot',section:'FLOW 1 — GROUND'},
+      {id:'ninetyNinetyLift',section:'FLOW 1 — GROUND'},
+      {id:'frogStatic',section:'FLOW 1 — GROUND'},
+      {id:'hipCARs',section:'FLOW 1 — GROUND'},
+      {id:'couchStretch',section:'FLOW 2 — STANDING'},
+      {id:'deepLungeKickout',section:'FLOW 2 — STANDING'},
+      {id:'hipFlexorReach',section:'FLOW 2 — STANDING'},
+      {id:'adductorStretch',section:'FLOW 2 — STANDING'},
+      {id:'supineHamstring',section:'FLOW 2 — STANDING'},
+      {id:'squatToKickout',section:'FLOW 2 — STANDING'},
+      {id:'squatRotFold',section:'FLOW 2 — STANDING'},
+      {id:'hipFlossing',section:'FLOW 2 — STANDING'},
+      {id:'thoracicExtension',section:'FLOW 3 — UPPER'},
+      {id:'downDogRotation',section:'FLOW 3 — UPPER'},
+      {id:'elbowWings',section:'FLOW 3 — UPPER'},
+      {id:'posteriorShoulder',section:'FLOW 3 — UPPER'},
+      {id:'heelSitSpineGlide',section:'CLOSE'},
+      {id:'ankleFlow',section:'CLOSE'},
+      {id:'lacrosseFoot',section:'CLOSE'},
+      {id:'kneelingShins',section:'CLOSE'},
+      {id:'tibialisRaise',section:'CLOSE'}
+    ]
+  },
+  preworkout: {
+    label:"Pre-Workout", title:"Activation Flow", color:"var(--preworkout)", totalMinutes:"8-10",
+    movements:[
+      {id:'breathReset',section:'PRIME'},
+      {id:'hipCARs',section:'HIP ACTIVATION'},
+      {id:'bearToKickout',section:'HIP ACTIVATION'},
+      {id:'squatToKickout',section:'HIP ACTIVATION'},
+      {id:'hipFlossing',section:'ANKLE + LOWER'},
+      {id:'downDogMarch',section:'ANKLE + LOWER'},
+      {id:'tibialisRaise',section:'ANKLE + LOWER'},
+      {id:'gluteBridge',section:'ACTIVATE'},
+      {id:'tke',section:'ACTIVATE'},
+      {id:'elbowWings',section:'UPPER PRIME'},
+      {id:'posteriorShoulder',section:'UPPER PRIME'}
+    ]
+  },
+  evening: {
+    label:"Wind-Down", title:"Evening Flow", color:"var(--evening)", totalMinutes:"10",
+    movements:[
+      {id:'childsPose',section:'FLOW 1 — DECOMPRESS'},
+      {id:'frogStatic',section:'FLOW 1 — DECOMPRESS'},
+      {id:'wideHingeRot',section:'FLOW 1 — DECOMPRESS'},
+      {id:'figureFour',section:'FLOW 2 — HIPS + SPINE'},
+      {id:'spinalTwist',section:'FLOW 2 — HIPS + SPINE'},
+      {id:'ninetyNinetyStatic',section:'FLOW 2 — HIPS + SPINE'},
+      {id:'downDogRotation',section:'FLOW 3 — UPPER RELEASE'},
+      {id:'childsPose',section:'FLOW 3 — UPPER RELEASE'},
+      {id:'posteriorShoulder',section:'FLOW 3 — UPPER RELEASE'},
+      {id:'legsUpWall',section:'CLOSE'},
+      {id:'diagBreathing',section:'CLOSE'}
+    ]
+  }
+};
+
+let currentFlow=null, currentIndex=0;
+let timerInterval=null, timerRunning=false;
+let timerSeconds=0, timerMax=0, currentSide='left', sessionStartTime=null;
+
+function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');window.scrollTo(0,0);}
+function goHome(){clearInterval(timerInterval);timerRunning=false;showScreen('home');}
+function startFlow(mode){currentFlow=FLOWS[mode];currentIndex=0;sessionStartTime=Date.now();document.getElementById('flowModeLabel').textContent=currentFlow.label;document.getElementById('flowTitle').textContent=currentFlow.title;document.getElementById('progressFill').style.background=currentFlow.color;buildDots();renderMovement();showScreen('flow');}
+function buildDots(){const c=document.getElementById('flowDots');c.innerHTML='';currentFlow.movements.forEach((_,i)=>{const d=document.createElement('div');d.className='flow-dot'+(i===0?' current':'');d.id='dot-'+i;c.appendChild(d);});}
+function updateDots(){currentFlow.movements.forEach((_,i)=>{const d=document.getElementById('dot-'+i);if(!d)return;d.className='flow-dot'+(i<currentIndex?' done':i===currentIndex?' current':'');});}
+
+function renderMovement(){
+  clearInterval(timerInterval);timerRunning=false;
+  const item=currentFlow.movements[currentIndex];
+  const mov=MOVEMENTS[item.id];
+  const total=currentFlow.movements.length;
+  const pct=Math.round((currentIndex/total)*100);
+  document.getElementById('progressText').textContent=`Movement ${currentIndex+1} of ${total}`;
+  document.getElementById('progressPct').textContent=pct+'%';
+  document.getElementById('progressFill').style.width=pct+'%';
+  updateDots();
+  document.getElementById('movementContainer').innerHTML=`
+    <div class="section-label">${item.section}</div>
+    <div class="movement-card">
+      <div class="movement-visual">${mov.svg}</div>
+      <div class="movement-body">
+        <div class="movement-name">${mov.name}</div>
+        <div class="movement-meta">
+          <span class="meta-tag meta-duration">${fmtDur(mov.duration)}</span>
+          <span class="meta-tag meta-type">${mov.type}</span>
+          ${mov.target.slice(0,2).map(t=>`<span class="meta-tag meta-target">${t}</span>`).join('')}
+        </div>
+        <div class="movement-cue">${mov.cue}</div>
+        <ul class="cue-points">${mov.points.map(p=>`<li>${p}</li>`).join('')}</ul>
+      </div>
+    </div>`;
+  document.querySelector('.movement-scroll').scrollTo(0,0);
+  timerSeconds=mov.duration;timerMax=mov.duration;
+  updateTimerDisplay(timerSeconds);updateTimerRing(timerSeconds,timerMax);
+  document.getElementById('timerBtn').textContent='Start';
+  document.getElementById('timerDisplay').style.color='var(--text)';
+  document.getElementById('timerLabel').textContent=mov.sides?'Hold per side':'Hold time';
+  const sideEl=document.getElementById('sideIndicator');
+  if(mov.sides){sideEl.style.display='flex';currentSide='left';document.getElementById('sideLeft').classList.add('active');document.getElementById('sideRight').classList.remove('active');}
+  else{sideEl.style.display='none';}
+  document.getElementById('prevBtn').style.opacity=currentIndex===0?'0.3':'1';
+  document.getElementById('prevBtn').disabled=currentIndex===0;
+  document.getElementById('nextBtn').textContent=currentIndex===total-1?'Finish ✓':'Next →';
+}
+
+function fmtDur(s){return s<60?`${s}s`:`${Math.floor(s/60)}m${s%60>0?' '+s%60+'s':''}`.trim();}
+
+function toggleTimer(){
+  if(timerRunning){clearInterval(timerInterval);timerRunning=false;document.getElementById('timerBtn').textContent='Resume';}
+  else{
+    timerRunning=true;document.getElementById('timerBtn').textContent='Pause';
+    timerInterval=setInterval(()=>{
+      timerSeconds--;updateTimerDisplay(timerSeconds);updateTimerRing(timerSeconds,timerMax);
+      if(timerSeconds<=0){
+        clearInterval(timerInterval);timerRunning=false;
+        document.getElementById('timerBtn').textContent='Done ✓';
+        document.getElementById('timerDisplay').style.color='var(--accent)';
+        const mov=MOVEMENTS[currentFlow.movements[currentIndex].id];
+        if(mov.sides&&currentSide==='left'){setTimeout(()=>{setSide('right');resetTimer();toggleTimer();},600);}
+      }
+    },1000);
+  }
+}
+
+function resetTimer(){clearInterval(timerInterval);timerRunning=false;const mov=MOVEMENTS[currentFlow.movements[currentIndex].id];timerSeconds=mov.duration;timerMax=mov.duration;updateTimerDisplay(timerSeconds);updateTimerRing(timerSeconds,timerMax);document.getElementById('timerBtn').textContent='Start';document.getElementById('timerDisplay').style.color='var(--text)';}
+function updateTimerDisplay(s){const v=Math.max(0,s),m=Math.floor(v/60),r=v%60;document.getElementById('timerDisplay').textContent=m>0?`${m}:${r.toString().padStart(2,'0')}`:`0:${r.toString().padStart(2,'0')}`;}
+function updateTimerRing(cur,max){document.getElementById('timerRing').style.strokeDashoffset=276.46*(1-Math.max(0,cur/max));}
+function setSide(side){currentSide=side;document.getElementById('sideLeft').classList.toggle('active',side==='left');document.getElementById('sideRight').classList.toggle('active',side==='right');}
+
+function nextMovement(){clearInterval(timerInterval);timerRunning=false;document.getElementById('timerDisplay').style.color='var(--text)';if(currentIndex>=currentFlow.movements.length-1){showComplete();return;}currentIndex++;renderMovement();}
+function prevMovement(){if(currentIndex===0)return;clearInterval(timerInterval);timerRunning=false;document.getElementById('timerDisplay').style.color='var(--text)';currentIndex--;renderMovement();}
+
+function showComplete(){
+  const elapsed=Math.round((Date.now()-sessionStartTime)/60000);
+  document.getElementById('statMoves').textContent=currentFlow.movements.length;
+  document.getElementById('statTime').textContent=elapsed||currentFlow.totalMinutes.split('-')[0];
+  const msgs={morning:"Foundation laid. Your body is ready for what the day brings.",full:"Full session complete. That's the kind of investment that compounds.",preworkout:"Activated and ready. Now go lift.",evening:"Day done. Take your magnesium and get to bed by 11."};
+  const mode=Object.keys(FLOWS).find(k=>FLOWS[k]===currentFlow);
+  document.getElementById('completeMsg').textContent=msgs[mode]||"You showed up. That's the whole game.";
+  showScreen('complete');
+}
+</script>
+</body>
+</html>

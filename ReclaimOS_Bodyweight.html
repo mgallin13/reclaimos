@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ReclaimOS | Bodyweight</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#0e0f0e;--bg2:#161714;--bg3:#1e1f1c;--card:#1a1b18;
+    --border:#2a2b27;--accent:#c8f060;--accent2:#8fb840;
+    --text:#e8e9e4;--text2:#9a9b94;--text3:#6a6b64;
+    --warm:#f0c860;--cool:#60c8f0;--red:#f06860;
+    --express:#60c8f0;--full:#c8f060;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+  .screen{display:none;min-height:100vh;}
+  .screen.active{display:flex;flex-direction:column;}
+
+  /* HOME */
+  #home{padding:44px 28px 36px;position:relative;overflow:hidden;}
+  #home::before{content:'';position:absolute;top:-80px;right:-80px;width:360px;height:360px;background:radial-gradient(circle,rgba(200,240,96,0.07) 0%,transparent 70%);pointer-events:none;}
+  .logo{font-family:'DM Serif Display',serif;font-size:12px;letter-spacing:0.2em;color:var(--accent);text-transform:uppercase;margin-bottom:4px;}
+  .home-title{font-family:'DM Serif Display',serif;font-size:38px;line-height:1.1;margin-bottom:8px;}
+  .home-title em{font-style:italic;color:var(--accent);}
+  .home-subtitle{font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:32px;}
+  .mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px;}
+  .mode-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:22px 18px;cursor:pointer;transition:all 0.2s;position:relative;overflow:hidden;}
+  .mode-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:16px 16px 0 0;}
+  .mode-card.express::before{background:var(--express);}
+  .mode-card.full-mode::before{background:var(--full);}
+  .mode-card:active{transform:scale(0.98);}
+  .mode-icon{font-size:26px;margin-bottom:10px;display:block;}
+  .mode-name{font-size:14px;font-weight:600;color:var(--text);margin-bottom:3px;}
+  .mode-time{font-size:12px;color:var(--text3);}
+  .mode-desc{font-size:11px;color:var(--text2);margin-top:7px;line-height:1.4;}
+  .mode-tag{display:inline-block;font-size:10px;padding:2px 8px;border-radius:20px;margin-top:9px;font-weight:500;}
+  .express .mode-tag{background:rgba(96,200,240,0.15);color:var(--express);}
+  .full-mode .mode-tag{background:rgba(200,240,96,0.15);color:var(--full);}
+
+  .home-note{background:var(--bg3);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:8px;padding:14px;font-size:12px;color:var(--text2);line-height:1.6;margin-bottom:16px;}
+  .philosophy-box{background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:16px;}
+  .philosophy-title{font-size:11px;text-transform:uppercase;letter-spacing:0.12em;color:var(--text3);margin-bottom:10px;}
+  .philosophy-row{display:flex;align-items:flex-start;gap:10px;margin-bottom:8px;}
+  .philosophy-row:last-child{margin-bottom:0;}
+  .philo-icon{font-size:14px;flex-shrink:0;margin-top:1px;}
+  .philo-text{font-size:12px;color:var(--text2);line-height:1.5;}
+  .philo-text strong{color:var(--text);font-weight:600;}
+
+  /* WORKOUT SCREEN */
+  #workout{flex-direction:column;}
+  .workout-header{padding:16px 22px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:14px;background:var(--bg2);position:sticky;top:0;z-index:10;}
+  .back-btn{background:var(--bg3);border:1px solid var(--border);color:var(--text2);width:36px;height:36px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+  .workout-header-info{flex:1;}
+  .workout-mode-label{font-size:10px;text-transform:uppercase;letter-spacing:0.15em;color:var(--text3);margin-bottom:2px;}
+  .workout-title{font-family:'DM Serif Display',serif;font-size:18px;}
+
+  .progress-wrap{padding:10px 22px;background:var(--bg2);}
+  .progress-info{display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin-bottom:5px;}
+  .progress-bar{height:3px;background:var(--border);border-radius:2px;overflow:hidden;}
+  .progress-fill{height:100%;border-radius:2px;transition:width 0.4s ease;}
+
+  .round-badge{padding:6px 22px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;gap:8px;align-items:center;}
+  .round-dot{width:8px;height:8px;border-radius:50%;background:var(--border);transition:all 0.2s;}
+  .round-dot.active{background:var(--accent);transform:scale(1.3);}
+  .round-dot.done{background:var(--accent2);}
+  .round-label{font-size:11px;color:var(--text3);margin-left:4px;}
+
+  .exercise-scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+  .exercise-container{padding:16px 22px;display:flex;flex-direction:column;gap:12px;}
+
+  .section-label{font-size:10px;text-transform:uppercase;letter-spacing:0.15em;color:var(--text3);padding:0 0 4px;border-bottom:1px solid var(--border);}
+
+  .exercise-card{background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden;}
+  .exercise-visual{background:#12140f;display:flex;align-items:center;justify-content:center;min-height:160px;padding:16px;}
+  .exercise-visual svg{width:100%;max-width:300px;display:block;}
+  .exercise-body{padding:16px;}
+  .exercise-name{font-family:'DM Serif Display',serif;font-size:20px;margin-bottom:4px;}
+  .exercise-meta{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;}
+  .meta-tag{font-size:11px;padding:3px 9px;border-radius:20px;font-weight:500;}
+  .meta-sets{background:rgba(200,240,96,0.12);color:var(--accent);}
+  .meta-reps{background:rgba(96,200,240,0.12);color:var(--cool);}
+  .meta-focus{background:rgba(240,200,96,0.12);color:var(--warm);}
+  .exercise-cue{font-size:14px;color:var(--text2);line-height:1.7;margin-bottom:10px;}
+  .cue-points{list-style:none;display:flex;flex-direction:column;gap:6px;}
+  .cue-points li{font-size:13px;color:var(--text2);padding-left:16px;position:relative;line-height:1.5;}
+  .cue-points li::before{content:'→';position:absolute;left:0;color:var(--accent);font-size:10px;top:2px;}
+
+  /* TIMER */
+  .timer-section{padding:12px 22px 16px;background:var(--bg2);border-top:1px solid var(--border);}
+  .timer-ring-wrap{display:flex;justify-content:center;margin-bottom:8px;}
+  .timer-ring{transform:rotate(-90deg);}
+  .timer-ring-bg{fill:none;stroke:var(--border);stroke-width:4;}
+  .timer-ring-fill{fill:none;stroke:var(--accent);stroke-width:4;stroke-linecap:round;transition:stroke-dashoffset 1s linear;}
+  .timer-display{text-align:center;margin-bottom:10px;}
+  .timer-number{font-family:'DM Serif Display',serif;font-size:52px;line-height:1;}
+  .timer-label{font-size:11px;color:var(--text3);margin-top:2px;}
+  .rest-label{font-size:12px;color:var(--warm);margin-top:4px;text-align:center;display:none;}
+  .timer-controls{display:flex;gap:10px;justify-content:center;}
+  .timer-btn{padding:10px 24px;border-radius:50px;border:none;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;}
+  .timer-btn.primary{background:var(--accent);color:var(--bg);flex:1;max-width:140px;}
+  .timer-btn.secondary{background:var(--bg3);color:var(--text2);border:1px solid var(--border);}
+
+  .nav-btns{display:flex;gap:10px;padding:12px 22px;background:var(--bg2);border-top:1px solid var(--border);}
+  .nav-btn{flex:1;padding:13px;border-radius:12px;border:1px solid var(--border);background:var(--bg3);color:var(--text2);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;}
+  .nav-btn.next-btn{background:var(--accent);color:var(--bg);border-color:var(--accent);font-weight:600;}
+
+  /* COMPLETE */
+  #complete{align-items:center;justify-content:center;padding:48px 28px;text-align:center;}
+  .complete-icon{font-size:60px;margin-bottom:20px;}
+  .complete-title{font-family:'DM Serif Display',serif;font-size:32px;margin-bottom:10px;}
+  .complete-sub{font-size:15px;color:var(--text2);line-height:1.6;margin-bottom:32px;}
+  .complete-stats{display:flex;gap:12px;justify-content:center;margin-bottom:32px;flex-wrap:wrap;}
+  .stat-box{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 20px;text-align:center;}
+  .stat-num{font-family:'DM Serif Display',serif;font-size:24px;color:var(--accent);}
+  .stat-label{font-size:11px;color:var(--text3);margin-top:2px;}
+  .complete-btn{background:var(--accent);color:var(--bg);border:none;padding:14px 36px;border-radius:50px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;cursor:pointer;}
+</style>
+</head>
+<body>
+
+<!-- HOME -->
+<div id="home" class="screen active">
+  <div class="home-header" style="margin-bottom:0">
+    <div class="logo">ReclaimOS</div>
+    <h1 class="home-title">Daily<br><em>Floor</em></h1>
+    <p class="home-subtitle">Bodyweight work that happens regardless of everything else. This is your non-negotiable.</p>
+  </div>
+
+  <div class="mode-grid" style="margin-top:28px">
+    <div class="mode-card express" onclick="startWorkout('express')">
+      <span class="mode-icon">⚡</span>
+      <div class="mode-name">10-Min Express</div>
+      <div class="mode-time">1 round · 10 min</div>
+      <div class="mode-desc">One round of everything. No excuses version. Do this on your worst days.</div>
+      <span class="mode-tag">Every day</span>
+    </div>
+    <div class="mode-card full-mode" onclick="startWorkout('full')">
+      <span class="mode-icon">💪</span>
+      <div class="mode-name">20-Min Full</div>
+      <div class="mode-time">2 rounds · 20 min</div>
+      <div class="mode-desc">Two full rounds. Your real daily workout when time allows.</div>
+      <span class="mode-tag">When time allows</span>
+    </div>
+  </div>
+
+  <div class="home-note" style="margin-top:16px">
+    <strong style="color:var(--text)">The daily floor logic:</strong> Do this every morning before anything else. On lift days, this comes first and you lift after. On off days, this IS your workout. On terrible days, even just the 10-min version counts.
+  </div>
+
+  <div class="philosophy-box" style="margin-top:12px">
+    <div class="philosophy-title">What's in each session</div>
+    <div class="philosophy-row"><span class="philo-icon">🫁</span><div class="philo-text"><strong>Push</strong> — push-up variation (chest, shoulders, triceps)</div></div>
+    <div class="philosophy-row"><span class="philo-icon">🦵</span><div class="philo-text"><strong>Hinge</strong> — hip hinge pattern (hamstrings, glutes, lower back)</div></div>
+    <div class="philosophy-row"><span class="philo-icon">🏋️</span><div class="philo-text"><strong>Squat</strong> — squat pattern (quads, glutes, ankle mobility)</div></div>
+    <div class="philosophy-row"><span class="philo-icon">🔄</span><div class="philo-text"><strong>Pull</strong> — row or band pull (upper back, scapular stability) — Full only</div></div>
+    <div class="philosophy-row"><span class="philo-icon">🧠</span><div class="philo-text"><strong>Core</strong> — anti-extension or rotation (dead bug, plank)</div></div>
+    <div class="philosophy-row"><span class="philo-icon">🦴</span><div class="philo-text"><strong>Hip stability</strong> — glute bridge (knee protection, Achilles chain)</div></div>
+    <div class="philosophy-row"><span class="philo-icon">🦶</span><div class="philo-text"><strong>Single leg</strong> — split squat or step-down (balance, knee tracking) — Full only</div></div>
+  </div>
+</div>
+
+<!-- WORKOUT SCREEN -->
+<div id="workout" class="screen">
+  <div class="workout-header">
+    <button class="back-btn" onclick="goHome()">←</button>
+    <div class="workout-header-info">
+      <div class="workout-mode-label" id="workoutModeLabel"></div>
+      <div class="workout-title" id="workoutTitle"></div>
+    </div>
+  </div>
+  <div class="progress-wrap">
+    <div class="progress-info"><span id="progressText">Exercise 1 of 6</span><span id="progressPct">0%</span></div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+  </div>
+  <div class="round-badge" id="roundBadge"></div>
+  <div class="exercise-scroll">
+    <div class="exercise-container" id="exerciseContainer"></div>
+  </div>
+  <div class="timer-section">
+    <div class="timer-ring-wrap">
+      <svg class="timer-ring" width="80" height="80" viewBox="0 0 100 100">
+        <circle class="timer-ring-bg" cx="50" cy="50" r="44"/>
+        <circle class="timer-ring-fill" id="timerRing" cx="50" cy="50" r="44" stroke-dasharray="276.46" stroke-dashoffset="0"/>
+      </svg>
+    </div>
+    <div class="timer-display">
+      <div class="timer-number" id="timerDisplay">0:40</div>
+      <div class="timer-label" id="timerLabel">Work time</div>
+    </div>
+    <div class="rest-label" id="restLabel">Rest — next up: <span id="nextExName"></span></div>
+    <div class="timer-controls">
+      <button class="timer-btn secondary" onclick="resetTimer()">Reset</button>
+      <button class="timer-btn primary" id="timerBtn" onclick="toggleTimer()">Start</button>
+    </div>
+  </div>
+  <div class="nav-btns">
+    <button class="nav-btn" id="prevBtn" onclick="prevExercise()">← Prev</button>
+    <button class="nav-btn next-btn" id="nextBtn" onclick="nextExercise()">Next →</button>
+  </div>
+</div>
+
+<!-- COMPLETE -->
+<div id="complete" class="screen">
+  <div class="complete-icon">✓</div>
+  <div class="complete-title">Floor Done</div>
+  <div class="complete-sub" id="completeMsg">Daily vitamins taken. Stack lifting on top when you're ready.</div>
+  <div class="complete-stats">
+    <div class="stat-box"><div class="stat-num" id="statEx">0</div><div class="stat-label">Exercises</div></div>
+    <div class="stat-box"><div class="stat-num" id="statRounds">0</div><div class="stat-label">Rounds</div></div>
+    <div class="stat-box"><div class="stat-num" id="statTime">0</div><div class="stat-label">Minutes</div></div>
+  </div>
+  <button class="complete-btn" onclick="goHome()">Back to Home</button>
+</div>
+
+<script>
+// ─── EXERCISE LIBRARY ───────────────────────────────────────
+
+const EXERCISES = {
+
+  pushUp: {
+    name: "Push-Up",
+    work: 40, rest: 15,
+    sets: "AMRAP", reps: "40 sec",
+    focus: "push",
+    cue: "The foundation push pattern. Quality over quantity. Full range — chest to floor, full lockout. Scale by elevating hands on bench if needed.",
+    points: [
+      "Hands slightly wider than shoulders, fingers spread",
+      "Body in a straight line from head to heels — no sagging hips",
+      "Lower until chest nearly touches the floor",
+      "Press back up to full arm extension",
+      "Scale: hands on bench (easier) or feet elevated (harder)",
+      "Stop 2 reps before failure — this is daily work, not max effort"
+    ],
+    svg: `<svg viewBox="0 0 300 160" xmlns="http://www.w3.org/2000/svg"><rect width="300" height="160" fill="#12140f"/><line x1="20" y1="148" x2="280" y2="148" stroke="#2a2b27" stroke-width="2"/><ellipse cx="62" cy="144" rx="15" ry="6" fill="#b87848"/><ellipse cx="240" cy="144" rx="15" ry="6" fill="#b87848"/><line x1="62" y1="144" x2="78" y2="118" stroke="#d4956a" stroke-width="10" stroke-linecap="round"/><line x1="240" y1="144" x2="224" y2="118" stroke="#d4956a" stroke-width="10" stroke-linecap="round"/><line x1="78" y1="118" x2="224" y2="118" stroke="#2d4a3e" stroke-width="22" stroke-linecap="round"/><line x1="78" y1="116" x2="55" y2="100" stroke="#d4956a" stroke-width="9" stroke-linecap="round"/><ellipse cx="50" cy="97" rx="10" ry="7" fill="#d4956a"/><line x1="224" y1="116" x2="248" y2="100" stroke="#d4956a" stroke-width="9" stroke-linecap="round"/><ellipse cx="253" cy="97" rx="10" ry="7" fill="#d4956a"/><circle cx="90" cy="106" r="14" fill="#d4956a"/><line x1="90" y1="92" x2="86" y2="75" stroke="#d4956a" stroke-width="8" stroke-linecap="round"/><text x="150" y="55" text-anchor="middle" fill="#9a9b94" font-size="9" font-family="DM Sans">straight line head to heels</text><line x1="55" y1="62" x2="245" y2="62" stroke="#c8f060" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.5"/><text x="150" y="140" text-anchor="middle" fill="#9a9b94" font-size="9" font-family="DM Sans">Scale: hands on bench to make easier</text></svg>`
+  },
+
+  hipHinge: {
+    name: "Good Morning",
+    work: 40, rest: 15,
+    sets: "AMRAP", reps: "40 sec",
+    focus: "hinge",
+    cue: "The bodyweight hinge. Trains the posterior chain — hamstrings, glutes, lower back — the same pattern as a Romanian deadlift. Hinge at the hip, not the waist.",
+    points: [
+      "Stand feet hip-width apart, hands behind head or crossed on chest",
+      "Soft bend in the knees — this is a HIP hinge, not a squat",
+      "Push hips back as you fold forward — back stays flat",
+      "Lower until you feel hamstring tension (usually parallel to floor)",
+      "Drive hips forward to stand — squeeze glutes at top",
+      "Slow and controlled — 2 seconds down, 1 up"
+    ],
+    svg: `<svg viewBox="0 0 300 160" xmlns="http://www.w3.org/2000/svg"><rect width="300" height="160" fill="#12140f"/><line x1="20" y1="148" x2="280" y2="148" stroke="#2a2b27" stroke-width="2"/><ellipse cx="148" cy="146" rx="18" ry="7" fill="#b87848"/><ellipse cx="175" cy="146" rx="18" ry="7" fill="#b87848"/><line x1="148" y1="146" x2="142" y2="102" stroke="#d4956a" stroke-width="12" stroke-linecap="round"/><line x1="175" y1="146" x2="168" y2="102" stroke="#d4956a" stroke-width="12" stroke-linecap="round"/><line x1="155" y1="102" x2="80" y2="85" stroke="#2d4a3e" stroke-width="22" stroke-linecap="round"/><circle cx="68" cy="80" r="14" fill="#d4956a"/><path d="M 68 66 Q 65 55 72 48" stroke="#d4956a" stroke-width="7" fill="none" stroke-linecap="round"/><line x1="155" y1="100" x2="142" y2="82" stroke="#d4956a" stroke-width="8" stroke-linecap="round"/><line x1="155" y1="100" x2="148" y2="80" stroke="#d4956a" stroke-width="8" stroke-linecap="round"/><line x1="20" y1="88" x2="165" y2="88" stroke="#c8f060" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.5"/><text x="200" y="84" fill="#c8f060" font-size="8" font-family="DM Sans">flat back</text><text x="200" y="96" fill="#f0c860" font-size="8" font-family="DM Sans">hips push back</text><line x1="170" y1="100" x2="195" y2="100" stroke="#f0c860" stroke-width="1.5" marker-end="url(#ay)"/><defs><marker id="ay" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#f0c860"/></marker></defs></svg>`
+  },
+
+  bodyweightSquat: {
+    name: "Bodyweight Squat",
+    work: 40, rest: 15,
+    sets: "AMRAP", reps: "40 sec",
+    focus: "squat",
+    cue: "The fundamental movement pattern. Focus on depth and knee tracking over speed. Every rep is ankle, knee, and hip mobility work combined.",
+    points: [
+      "Feet shoulder-width apart, toes slightly out",
+      "Arms out front for counterbalance",
+      "Sit back and down — hips below parallel if possible",
+      "Knees track over toes — don't let them cave inward",
+      "Chest stays up — don't fold forward",
+      "Drive through heels to stand — squeeze glutes at top"
+    ],
+    svg: `<svg viewBox="0 0 300 160" xmlns="http://www.w3.org/2000/svg"><rect width="300" height="160" fill="#12140f"/><line x1="20" y1="148" x2="280" y2="148" stroke="#2a2b27" stroke-width="2"/><ellipse cx="122" cy="146" rx="18" ry="7" fill="#b87848"/><ellipse cx="178" cy="146" rx="18" ry="7" fill="#b87848"/><line x1="122" y1="146" x2="138" y2="108" stroke="#d4956a" stroke-width="13" stroke-linecap="round"/><line x1="178" y1="146" x2="162" y2="108" stroke="#d4956a" stroke-width="13" stroke-linecap="round"/><ellipse cx="150" cy="106" rx="32" ry="12" fill="#1a3a2a"/><rect x="132" y="58" width="36" height="50" rx="9" fill="#2d4a3e"/><circle cx="150" cy="46" r="15" fill="#d4956a"/><line x1="134" y1="74" x2="100" y2="80" stroke="#d4956a" stroke-width="8" stroke-linecap="round"/><line x1="166" y1="74" x2="200" y2="80" stroke="#d4956a" stroke-width="8" stroke-linecap="round"/><line x1="122" y1="126" x2="114" y2="140" stroke="#c8f060" stroke-width="1.5" stroke-dasharray="3,2"/><line x1="178" y1="126" x2="186" y2="140" stroke="#c8f060" stroke-width="1.5" stroke-dasharray="3,2"/><text x="100" y="136" fill="#c8f060" font-size="8" font-family="DM Sans">knee</text><text x="185" y="136" fill="#c8f060" font-size="8" font-family="DM Sans">knee</text><text x="150" y="16" text-anchor="middle" fill="#9a9b94" font-size="9" font-family="DM Sans">hips below parallel · knees track toes</text></svg>`
+  },
+
+  deadBug: {
+    name: "Dead Bug",
+    work: 40, rest: 15,
+    sets: "AMRAP", reps: "40 sec",
+    focus: "core",
+    cue: "Anti-extension core work. Lower back pressed flat to floor the entire time — if it comes up, you've gone too far. Slow and deliberate.",
+    points: [
+      "Lie on back, arms straight up, knees at 90° over hips",
+      "Press lower back FLAT into the floor — hold it there",
+      "Lower right arm and left leg toward floor simultaneously",
+      "Stop before your lower back lifts — that's your range",
+      "Return to start and repeat opposite side",
+      "Exhale as you extend — this helps keep the back flat"
+    ],
+    svg: `<svg viewBox="0 0 300 160" xmlns="http://www.w3.org/2000/svg"><rect width="300" height="160" fill="#12140f"/><rect x="42" y="92" width="190" height="28" rx="12" fill="#2d4a3e"/><circle cx="30" cy="106" r="16" fill="#d4956a"/><line x1="98" y1="88" x2="112" y2="55" stroke="#d4956a" stroke-width="10" stroke-linecap="round"/><ellipse cx="114" cy="52" rx="9" ry="7" fill="#d4956a"/><line x1="145" y1="88" x2="158" y2="55" stroke="#d4956a" stroke-width="10" stroke-linecap="round"/><ellipse cx="160" cy="52" rx="9" ry="7" fill="#d4956a"/><line x1="225" y1="95" x2="270" y2="68" stroke="#c8f060" stroke-width="10" stroke-linecap="round"/><ellipse cx="274" cy="65" rx="10" ry="7" fill="#c8f060" opacity="0.8"/><line x1="218" y1="98" x2="255" y2="130" stroke="#d4956a" stroke-width="9" stroke-linecap="round" opacity="0.6"/><ellipse cx="256" cy="133" rx="10" ry="6" fill="#b87848" opacity="0.5"/><text x="150" y="148" text-anchor="middle" fill="#f0c860" font-size="9" font-family="DM Sans">lower back FLAT to floor — always</text><line x1="42" y1="115" x2="232" y2="115" stroke="#f0c860" stroke-width="1.5" stroke-dasharray="3,2" opacity="0.5"/></svg>`
+  },
+
+  gluteBridgeBW: {
+    name: "Glute Bridge",
+    work: 40, rest: 15,
+    sets: "AMRAP", reps: "40 sec",
+    focus: "hip stability",
+    cue: "Hip strength protects the knee and feeds into the Achilles chain. Squeeze HARD at the top. Add a 2-second hold for extra glute activation.",
+    points: [
+      "Lie on back, knees bent, feet flat, hip-width apart",
+      "Press through both heels and drive hips to ceiling",
+      "Squeeze glutes hard at top — 2 second hold each rep",
+      "Lower slowly — don't just drop",
+      "Keep core braced throughout",
+      "Progress: single-leg version, or add a band above knees"
+    ],
+    svg: `<svg viewBox="0 0 300 160" xmlns="http://www.w3.org/2000/svg"><rect width="300" height="160" fill="#12140f"/><line x1="20" y1="148" x2="280" y2="148" stroke="#2a2b27" stroke-width="2"/><ellipse cx="195" cy="146" rx="18" ry="7" fill="#b87848"/><ellipse cx="228" cy="146" rx="18" ry="7" fill="#b87848"/><line x1="195" y1="146" x2="178" y2="114" stroke="#d4956a" stroke-width="13" stroke-linecap="round"/><line x1="228" y1="146" x2="211" y2="114" stroke="#d4956a" stroke-width="13" stroke-linecap="round"/><path d="M 175 112 Q 195 82 212 112" stroke="#c8f060" stroke-width="13" fill="none" stroke-linecap="round"/><path d="M 178 104 Q 196 88 213 104 Q 213 118 196 120 Q 179 118 178 104" fill="rgba(200,240,96,0.2)" stroke="#c8f060" stroke-width="1.2"/><rect x="55" y="110" width="112" height="22" rx="6" fill="#2d4a3e"/><circle cx="46" cy="120" r="14" fill="#d4956a"/><line x1="175" y1="112" x2="112" y2="114" stroke="#2d4a3e" stroke-width="12" stroke-linecap="round"/><line x1="195" y1="90" x2="195" y2="72" stroke="#c8f060" stroke-width="2" stroke-dasharray="2,2"/><text x="200" y="70" fill="#c8f060" font-size="9" font-family="DM Sans">SQUEEZE</text><text x="200" y="82" fill="#c8f060" font-size="8" font-family="DM Sans">2 sec hold</text></svg>`
+  },
+
+  splitSquat: {
+    name: "Split Squat",
+    work: 35, rest: 15,
+    sets: "AMRAP", reps: "35 sec each",
+    focus: "single leg",
+    cue: "Single leg strength that directly transfers to basketball. Also builds the hip flexor length you need. Front shin stays vertical.",
+    points: [
+      "Step one foot forward, one back — wide stance",
+      "Lower rear knee toward floor — keep it off the floor",
+      "Front shin stays vertical — knee doesn't travel past toes much",
+      "Drive through the front heel to stand",
+      "Keep torso upright throughout",
+      "Full range — rear knee close to floor each rep"
+    ],
+    svg: `<svg viewBox="0 0 300 160" xmlns="http://www.w3.org/2000/svg"><rect width="300" height="160" fill="#12140f"/><line x1="20" y1="148" x2="280" y2="148" stroke="#2a2b27" stroke-width="2"/><ellipse cx="85" cy="146" rx="20" ry="7" fill="#b87848"/><ellipse cx="235" cy="132" rx="16" ry="7" fill="#b87848"/><line x1="85" y1="146" x2="92" y2="106" stroke="#d4956a" stroke-width="13" stroke-linecap="round"/><line x1="152" y1="92" x2="235" y2="132" stroke="#d4956a" stroke-width="12" stroke-linecap="round"/><ellipse cx="152" cy="140" rx="14" ry="8" fill="#b87848" opacity="0.4"/><line x1="92" y1="106" x2="152" y2="92" stroke="#d4956a" stroke-width="12" stroke-linecap="round"/><rect x="138" y="46" width="34" height="48" rx="8" fill="#2d4a3e"/><circle cx="155" cy="34" r="15" fill="#d4956a"/><line x1="140" y1="62" x2="118" y2="72" stroke="#d4956a" stroke-width="8" stroke-linecap="round"/><line x1="170" y1="62" x2="192" y2="72" stroke="#d4956a" stroke-width="8" stroke-linecap="round"/><line x1="86" y1="108" x2="86" y2="140" stroke="#c8f060" stroke-width="1.5" stroke-dasharray="3,2"/><text x="62" y="124" fill="#c8f060" font-size="8" font-family="DM Sans">shin</text><text x="62" y="134" fill="#c8f060" font-size="8" font-family="DM Sans">vertical</text></svg>`
+  },
+
+  bandRow: {
+    name: "Band Row",
+    work: 40, rest: 15,
+    sets: "AMRAP", reps: "40 sec",
+    focus: "pull",
+    cue: "The pull pattern your upper back needs. Loop a band around a door handle or sturdy anchor. Scapulae squeeze at the back of the movement.",
+    points: [
+      "Loop band around door handle or anchor at waist height",
+      "Step back to create tension, slight hinge at hips",
+      "Pull elbows back, squeezing shoulder blades together",
+      "Hold 1 second at the back — feel the squeeze",
+      "Control the return — don't let the band yank you forward",
+      "No anchor? Do doorframe rows: grip a doorframe and lean back"
+    ],
+    svg: `<svg viewBox="0 0 300 160" xmlns="http://www.w3.org/2000/svg"><rect width="300" height="160" fill="#12140f"/><line x1="20" y1="148" x2="280" y2="148" stroke="#2a2b27" stroke-width="2"/><rect x="15" y="45" width="14" height="103" rx="3" fill="#2a2b27"/><ellipse cx="22" cy="95" r="7" fill="#3a3b37" stroke="#c8f060" stroke-width="1.5"/><path d="M 29 93 Q 70 88 100 96" stroke="#f0c860" stroke-width="3" fill="none" stroke-dasharray="5,3"/><path d="M 29 97 Q 70 102 100 96" stroke="#f0c860" stroke-width="3" fill="none" stroke-dasharray="5,3"/><ellipse cx="175" cy="146" rx="18" ry="7" fill="#b87848"/><ellipse cx="205" cy="146" rx="18" ry="7" fill="#b87848"/><line x1="175" y1="146" x2="165" y2="108" stroke="#d4956a" stroke-width="12" stroke-linecap="round"/><line x1="205" y1="146" x2="195" y2="108" stroke="#d4956a" stroke-width="12" stroke-linecap="round"/><rect x="148" y="60" width="60" height="50" rx="10" fill="#2d4a3e"/><circle cx="178" cy="48" r="16" fill="#d4956a"/><line x1="150" y1="78" x2="100" y2="90" stroke="#d4956a" stroke-width="9" stroke-linecap="round"/><ellipse cx="97" cy="91" rx="10" ry="7" fill="#d4956a"/><line x1="206" y1="78" x2="235" y2="72" stroke="#d4956a" stroke-width="9" stroke-linecap="round"/><path d="M 152 74 Q 128 80 108 90" stroke="#c8f060" stroke-width="1.5" stroke-dasharray="3,2"/><text x="178" y="26" text-anchor="middle" fill="#c8f060" font-size="9" font-family="DM Sans">squeeze shoulder blades</text></svg>`
+  },
+
+  plankHold: {
+    name: "Plank",
+    work: 30, rest: 15,
+    sets: "hold", reps: "30 sec",
+    focus: "core",
+    cue: "A timed isometric hold. Don't just survive it — actively push the floor away, brace everything, and breathe. Quality over duration.",
+    points: [
+      "Forearms on floor, elbows under shoulders",
+      "Body in a straight line — no piking hips up or sagging",
+      "Push the floor away — creates tension through the whole body",
+      "Squeeze glutes and quads — not just abs",
+      "Breathe steadily — don't hold your breath",
+      "Scale down: knees on floor · Scale up: add shoulder taps"
+    ],
+    svg: `<svg viewBox="0 0 300 160" xmlns="http://www.w3.org/2000/svg"><rect width="300" height="160" fill="#12140f"/><line x1="20" y1="148" x2="280" y2="148" stroke="#2a2b27" stroke-width="2"/><ellipse cx="240" cy="145" rx="18" ry="6" fill="#b87848"/><ellipse cx="268" cy="145" rx="16" ry="6" fill="#b87848"/><line x1="240" y1="145" x2="220" y2="118" stroke="#d4956a" stroke-width="12" stroke-linecap="round"/><line x1="268" y1="145" x2="248" y2="118" stroke="#d4956a" stroke-width="12" stroke-linecap="round"/><line x1="220" y1="118" x2="75" y2="110" stroke="#2d4a3e" stroke-width="22" stroke-linecap="round"/><ellipse cx="60" cy="128" rx="14" ry="8" fill="#d4956a"/><ellipse cx="82" cy="130" rx="14" ry="8" fill="#d4956a"/><line x1="76" y1="124" x2="60" y2="128" stroke="#d4956a" stroke-width="5" stroke-linecap="round"/><circle cx="88" cy="98" r="14" fill="#d4956a"/><line x1="88" y1="84" x2="85" y2="68" stroke="#d4956a" stroke-width="7" stroke-linecap="round"/><line x1="20" y1="110" x2="270" y2="110" stroke="#c8f060" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.45"/><text x="150" y="55" text-anchor="middle" fill="#9a9b94" font-size="9" font-family="DM Sans">straight line · brace everything · breathe</text></svg>`
+  },
+
+  stepDown: {
+    name: "Step-Down",
+    work: 35, rest: 15,
+    sets: "AMRAP", reps: "35 sec each",
+    focus: "single leg",
+    cue: "Step off a low bench or step. This is the most direct knee bulletproofing exercise. The slow lowering is where the work happens — control every inch.",
+    points: [
+      "Stand on edge of bench or step, one foot hanging off",
+      "Slowly lower the hanging foot toward the floor",
+      "Control the descent — 3-4 seconds down",
+      "Tap the floor lightly — don't load the bottom foot",
+      "Drive back up through the standing leg heel",
+      "Hips stay level — don't let them drop to the hanging side"
+    ],
+    svg: `<svg viewBox="0 0 300 160" xmlns="http://www.w3.org/2000/svg"><rect width="300" height="160" fill="#12140f"/><rect x="30" y="120" width="120" height="28" rx="5" fill="#2a2b27" stroke="#3a3b37" stroke-width="1.5"/><line x1="20" y1="148" x2="280" y2="148" stroke="#2a2b27" stroke-width="2"/><ellipse cx="95" cy="120" rx="16" ry="7" fill="#b87848"/><line x1="95" y1="120" x2="98" y2="80" stroke="#d4956a" stroke-width="13" stroke-linecap="round"/><line x1="155" y1="72" x2="175" y2="132" stroke="#c8f060" stroke-width="12" stroke-linecap="round"/><ellipse cx="176" cy="136" rx="14" ry="6" fill="#c8f060" opacity="0.6"/><ellipse cx="176" cy="146" rx="12" ry="5" fill="#c8f060" opacity="0.3"/><rect x="130" y="32" width="34" height="42" rx="8" fill="#2d4a3e"/><circle cx="147" cy="20" r="14" fill="#d4956a"/><line x1="98" y1="80" x2="155" y2="72" stroke="#d4956a" stroke-width="12" stroke-linecap="round"/><line x1="132" y1="46" x2="110" y2="56" stroke="#d4956a" stroke-width="7" stroke-linecap="round"/><line x1="162" y1="46" x2="185" y2="54" stroke="#d4956a" stroke-width="7" stroke-linecap="round"/><text x="195" y="115" fill="#c8f060" font-size="8" font-family="DM Sans">slow lower</text><text x="195" y="126" fill="#c8f060" font-size="8" font-family="DM Sans">3-4 sec down</text></svg>`
+  },
+
+  mountainClimber: {
+    name: "Mountain Climber",
+    work: 30, rest: 15,
+    sets: "AMRAP", reps: "30 sec",
+    focus: "cardio + core",
+    cue: "Adds a conditioning element to the full session. Keep hips level — don't let them bounce up. Slower is more effective than fast and sloppy.",
+    points: [
+      "Start in high plank position — hands under shoulders",
+      "Drive one knee toward chest, then switch",
+      "Hips stay level — don't pike up with each drive",
+      "Keep core braced throughout",
+      "Pace: controlled and deliberate, not a sprint",
+      "Breathe — exhale as each knee comes forward"
+    ],
+    svg: `<svg viewBox="0 0 300 160" xmlns="http://www.w3.org/2000/svg"><rect width="300" height="160" fill="#12140f"/><line x1="20" y1="148" x2="280" y2="148" stroke="#2a2b27" stroke-width="2"/><ellipse cx="240" cy="143" rx="16" ry="6" fill="#b87848"/><line x1="240" y1="143" x2="215" y2="108" stroke="#d4956a" stroke-width="12" stroke-linecap="round"/><line x1="215" y1="108" x2="75" y2="102" stroke="#2d4a3e" stroke-width="20" stroke-linecap="round"/><ellipse cx="62" cy="118" rx="13" ry="7" fill="#d4956a"/><ellipse cx="80" cy="120" rx="13" ry="7" fill="#d4956a"/><line x1="78" y1="114" x2="62" y2="118" stroke="#d4956a" stroke-width="5" stroke-linecap="round"/><circle cx="86" cy="90" r="13" fill="#d4956a"/><line x1="86" y1="77" x2="83" y2="62" stroke="#d4956a" stroke-width="7" stroke-linecap="round"/><line x1="190" y1="106" x2="172" y2="85" stroke="#c8f060" stroke-width="12" stroke-linecap="round"/><ellipse cx="170" cy="82" rx="11" ry="8" fill="#c8f060" opacity="0.8"/><text x="150" y="52" text-anchor="middle" fill="#9a9b94" font-size="9" font-family="DM Sans">hips level · controlled pace · breathe</text></svg>`
+  }
+};
+
+// ─── WORKOUT PROGRAMS ────────────────────────────────────────
+
+const WORKOUTS = {
+  express: {
+    label: "10-Min Express",
+    title: "Daily Floor — Express",
+    color: "var(--express)",
+    rounds: 1,
+    totalMinutes: "10",
+    exercises: [
+      { id: 'pushUp', section: 'PUSH' },
+      { id: 'hipHinge', section: 'HINGE' },
+      { id: 'bodyweightSquat', section: 'SQUAT' },
+      { id: 'deadBug', section: 'CORE' },
+      { id: 'gluteBridgeBW', section: 'HIP STABILITY' },
+      { id: 'plankHold', section: 'CORE FINISHER' }
+    ]
+  },
+  full: {
+    label: "20-Min Full",
+    title: "Daily Floor — Full",
+    color: "var(--full)",
+    rounds: 2,
+    totalMinutes: "20",
+    exercises: [
+      { id: 'pushUp', section: 'PUSH' },
+      { id: 'hipHinge', section: 'HINGE' },
+      { id: 'bodyweightSquat', section: 'SQUAT' },
+      { id: 'bandRow', section: 'PULL' },
+      { id: 'deadBug', section: 'CORE' },
+      { id: 'gluteBridgeBW', section: 'HIP STABILITY' },
+      { id: 'splitSquat', section: 'SINGLE LEG' },
+      { id: 'plankHold', section: 'CORE FINISHER' },
+      { id: 'mountainClimber', section: 'CONDITIONING' }
+    ]
+  }
+};
+
+// ─── APP STATE ────────────────────────────────────────────────
+
+let currentWorkout = null, currentIndex = 0, currentRound = 1;
+let timerInterval = null, timerRunning = false;
+let timerSeconds = 0, timerMax = 0;
+let isResting = false, sessionStartTime = null;
+
+// ─── NAVIGATION ───────────────────────────────────────────────
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function goHome() {
+  clearInterval(timerInterval);
+  timerRunning = false;
+  showScreen('home');
+}
+
+function startWorkout(mode) {
+  currentWorkout = WORKOUTS[mode];
+  currentIndex = 0;
+  currentRound = 1;
+  sessionStartTime = Date.now();
+  document.getElementById('workoutModeLabel').textContent = currentWorkout.label;
+  document.getElementById('workoutTitle').textContent = currentWorkout.title;
+  document.getElementById('progressFill').style.background = currentWorkout.color;
+  buildRoundBadge();
+  renderExercise();
+  showScreen('workout');
+}
+
+function buildRoundBadge() {
+  const badge = document.getElementById('roundBadge');
+  if (currentWorkout.rounds === 1) {
+    badge.innerHTML = '<span class="round-label" style="color:var(--text2)">Single round</span>';
+    return;
+  }
+  let html = '';
+  for (let i = 1; i <= currentWorkout.rounds; i++) {
+    html += `<div class="round-dot ${i < currentRound ? 'done' : i === currentRound ? 'active' : ''}" id="rounddot-${i}"></div>`;
+  }
+  html += `<span class="round-label">Round ${currentRound} of ${currentWorkout.rounds}</span>`;
+  badge.innerHTML = html;
+}
+
+function updateRoundBadge() {
+  if (currentWorkout.rounds === 1) return;
+  for (let i = 1; i <= currentWorkout.rounds; i++) {
+    const d = document.getElementById('rounddot-' + i);
+    if (d) d.className = `round-dot ${i < currentRound ? 'done' : i === currentRound ? 'active' : ''}`;
+  }
+  const lbl = document.querySelector('.round-label');
+  if (lbl) lbl.textContent = `Round ${currentRound} of ${currentWorkout.rounds}`;
+}
+
+// ─── RENDER ────────────────────────────────────────────────────
+
+function renderExercise() {
+  clearInterval(timerInterval);
+  timerRunning = false;
+  isResting = false;
+
+  const totalEx = currentWorkout.exercises.length;
+  const totalSteps = totalEx * currentWorkout.rounds;
+  const currentStep = (currentRound - 1) * totalEx + currentIndex;
+  const pct = Math.round((currentStep / totalSteps) * 100);
+
+  document.getElementById('progressText').textContent = `Exercise ${currentIndex + 1} of ${totalEx} · Round ${currentRound}`;
+  document.getElementById('progressPct').textContent = pct + '%';
+  document.getElementById('progressFill').style.width = pct + '%';
+
+  const item = currentWorkout.exercises[currentIndex];
+  const ex = EXERCISES[item.id];
+
+  document.getElementById('exerciseContainer').innerHTML = `
+    <div class="section-label">${item.section}</div>
+    <div class="exercise-card">
+      <div class="exercise-visual">${ex.svg}</div>
+      <div class="exercise-body">
+        <div class="exercise-name">${ex.name}</div>
+        <div class="exercise-meta">
+          <span class="meta-tag meta-reps">${ex.reps}</span>
+          <span class="meta-tag meta-focus">${ex.focus}</span>
+        </div>
+        <div class="exercise-cue">${ex.cue}</div>
+        <ul class="cue-points">${ex.points.map(p => `<li>${p}</li>`).join('')}</ul>
+      </div>
+    </div>`;
+
+  document.querySelector('.exercise-scroll').scrollTo(0, 0);
+
+  timerSeconds = ex.work;
+  timerMax = ex.work;
+  updateTimerDisplay(timerSeconds);
+  updateTimerRing(timerSeconds, timerMax);
+  document.getElementById('timerBtn').textContent = 'Start';
+  document.getElementById('timerDisplay').style.color = 'var(--text)';
+  document.getElementById('timerLabel').textContent = ex.sets === 'hold' ? 'Hold' : 'Work time';
+  document.getElementById('restLabel').style.display = 'none';
+
+  const isLast = currentIndex === totalEx - 1 && currentRound === currentWorkout.rounds;
+  document.getElementById('prevBtn').style.opacity = (currentIndex === 0 && currentRound === 1) ? '0.3' : '1';
+  document.getElementById('prevBtn').disabled = (currentIndex === 0 && currentRound === 1);
+  document.getElementById('nextBtn').textContent = isLast ? 'Finish ✓' : 'Next →';
+}
+
+function fmtTime(s) {
+  const v = Math.max(0, s), m = Math.floor(v / 60), r = v % 60;
+  return m > 0 ? `${m}:${r.toString().padStart(2, '0')}` : `0:${r.toString().padStart(2, '0')}`;
+}
+
+// ─── TIMER ────────────────────────────────────────────────────
+
+function toggleTimer() {
+  if (timerRunning) {
+    clearInterval(timerInterval);
+    timerRunning = false;
+    document.getElementById('timerBtn').textContent = isResting ? 'Resume Rest' : 'Resume';
+  } else {
+    timerRunning = true;
+    document.getElementById('timerBtn').textContent = 'Pause';
+    timerInterval = setInterval(() => {
+      timerSeconds--;
+      updateTimerDisplay(timerSeconds);
+      updateTimerRing(timerSeconds, timerMax);
+      if (timerSeconds <= 0) {
+        clearInterval(timerInterval);
+        timerRunning = false;
+        if (!isResting) {
+          // Work done — start rest
+          const ex = EXERCISES[currentWorkout.exercises[currentIndex].id];
+          isResting = true;
+          timerSeconds = ex.rest;
+          timerMax = ex.rest;
+          updateTimerDisplay(timerSeconds);
+          updateTimerRing(timerSeconds, timerMax);
+          document.getElementById('timerLabel').textContent = 'Rest';
+          document.getElementById('timerDisplay').style.color = 'var(--warm)';
+          document.getElementById('timerRing').style.stroke = 'var(--warm)';
+
+          // Show next exercise name
+          const nextIdx = currentIndex + 1;
+          const totalEx = currentWorkout.exercises.length;
+          let nextName = '';
+          if (nextIdx < totalEx) {
+            nextName = EXERCISES[currentWorkout.exercises[nextIdx].id].name;
+          } else if (currentRound < currentWorkout.rounds) {
+            nextName = EXERCISES[currentWorkout.exercises[0].id].name + ' (Round 2)';
+          }
+          if (nextName) {
+            document.getElementById('nextExName').textContent = nextName;
+            document.getElementById('restLabel').style.display = 'block';
+          }
+
+          document.getElementById('timerBtn').textContent = 'Start Rest';
+          toggleTimer();
+        } else {
+          // Rest done — advance
+          document.getElementById('timerDisplay').style.color = 'var(--text)';
+          document.getElementById('timerRing').style.stroke = 'var(--accent)';
+          isResting = false;
+          document.getElementById('restLabel').style.display = 'none';
+          nextExercise();
+        }
+      }
+    }, 1000);
+  }
+}
+
+function resetTimer() {
+  clearInterval(timerInterval);
+  timerRunning = false;
+  isResting = false;
+  const ex = EXERCISES[currentWorkout.exercises[currentIndex].id];
+  timerSeconds = ex.work;
+  timerMax = ex.work;
+  updateTimerDisplay(timerSeconds);
+  updateTimerRing(timerSeconds, timerMax);
+  document.getElementById('timerBtn').textContent = 'Start';
+  document.getElementById('timerDisplay').style.color = 'var(--text)';
+  document.getElementById('timerRing').style.stroke = 'var(--accent)';
+  document.getElementById('timerLabel').textContent = 'Work time';
+  document.getElementById('restLabel').style.display = 'none';
+}
+
+function updateTimerDisplay(s) {
+  document.getElementById('timerDisplay').textContent = fmtTime(s);
+}
+
+function updateTimerRing(cur, max) {
+  document.getElementById('timerRing').style.strokeDashoffset = 276.46 * (1 - Math.max(0, cur / max));
+}
+
+// ─── NAVIGATION ────────────────────────────────────────────────
+
+function nextExercise() {
+  clearInterval(timerInterval);
+  timerRunning = false;
+  isResting = false;
+  document.getElementById('timerDisplay').style.color = 'var(--text)';
+  document.getElementById('timerRing').style.stroke = 'var(--accent)';
+
+  const totalEx = currentWorkout.exercises.length;
+  const isLastEx = currentIndex === totalEx - 1;
+  const isLastRound = currentRound === currentWorkout.rounds;
+
+  if (isLastEx && isLastRound) {
+    showComplete();
+    return;
+  }
+
+  if (isLastEx && !isLastRound) {
+    currentRound++;
+    currentIndex = 0;
+    updateRoundBadge();
+  } else {
+    currentIndex++;
+  }
+
+  renderExercise();
+}
+
+function prevExercise() {
+  if (currentIndex === 0 && currentRound === 1) return;
+  clearInterval(timerInterval);
+  timerRunning = false;
+  isResting = false;
+  document.getElementById('timerDisplay').style.color = 'var(--text)';
+  document.getElementById('timerRing').style.stroke = 'var(--accent)';
+
+  if (currentIndex === 0 && currentRound > 1) {
+    currentRound--;
+    currentIndex = currentWorkout.exercises.length - 1;
+    updateRoundBadge();
+  } else {
+    currentIndex--;
+  }
+  renderExercise();
+}
+
+function showComplete() {
+  const elapsed = Math.round((Date.now() - sessionStartTime) / 60000);
+  document.getElementById('statEx').textContent = currentWorkout.exercises.length;
+  document.getElementById('statRounds').textContent = currentWorkout.rounds;
+  document.getElementById('statTime').textContent = elapsed || currentWorkout.totalMinutes;
+  const msgs = {
+    express: "Daily vitamins taken. Stack lifting on top if it's a gym day.",
+    full: "Full floor done. That's your non-negotiable checked. Everything else is a bonus."
+  };
+  const mode = Object.keys(WORKOUTS).find(k => WORKOUTS[k] === currentWorkout);
+  document.getElementById('completeMsg').textContent = msgs[mode] || "Done. You showed up.";
+  showScreen('complete');
+}
+</script>
+</body>
+</html>
