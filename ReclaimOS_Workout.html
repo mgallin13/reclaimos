@@ -1,0 +1,938 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ReclaimOS | Lift</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#0e0f0e;--bg2:#161714;--bg3:#1e1f1c;--card:#1a1b18;
+  --border:#2a2b27;--accent:#c8f060;--accent2:#8fb840;
+  --text:#e8e9e4;--text2:#9a9b94;--text3:#6a6b64;
+  --warm:#f0c860;--cool:#60c8f0;--red:#f06860;--purple:#c060f0;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+.screen{display:none;min-height:100vh;}
+.screen.active{display:flex;flex-direction:column;}
+
+/* ── HOME ── */
+#home{padding:44px 26px 36px;overflow:hidden;position:relative;}
+#home::before{content:'';position:absolute;top:-60px;right:-60px;width:300px;height:300px;background:radial-gradient(circle,rgba(200,240,96,0.07) 0%,transparent 70%);pointer-events:none;}
+.logo{font-family:'DM Serif Display',serif;font-size:12px;letter-spacing:0.22em;color:var(--accent);text-transform:uppercase;margin-bottom:3px;}
+.home-title{font-family:'DM Serif Display',serif;font-size:38px;line-height:1.1;margin-bottom:8px;}
+.home-title em{font-style:italic;color:var(--accent);}
+.home-sub{font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:28px;}
+
+/* Phase bar */
+.phase-bar{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:20px;}
+.phase-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.phase-label{font-size:11px;text-transform:uppercase;letter-spacing:0.14em;color:var(--text3);}
+.phase-name{font-size:14px;font-weight:600;color:var(--accent);}
+.phase-track{height:4px;background:var(--border);border-radius:2px;overflow:hidden;margin-bottom:8px;}
+.phase-fill{height:100%;background:var(--accent);border-radius:2px;transition:width 0.5s ease;}
+.phase-weeks{display:flex;justify-content:space-between;font-size:10px;color:var(--text3);}
+.phase-change{font-size:11px;color:var(--text2);cursor:pointer;text-decoration:underline;text-decoration-color:var(--border);}
+
+/* Day cards */
+.day-grid{display:flex;flex-direction:column;gap:10px;margin-bottom:20px;}
+.day-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px 18px;cursor:pointer;transition:all 0.2s;position:relative;overflow:hidden;display:flex;align-items:center;gap:16px;}
+.day-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:14px 0 0 14px;}
+.day-card.tue::before{background:var(--accent);}
+.day-card.thu::before{background:var(--warm);}
+.day-card.sat::before{background:var(--cool);}
+.day-card:active{transform:scale(0.98);}
+.day-icon{font-size:22px;flex-shrink:0;}
+.day-info{flex:1;}
+.day-name{font-size:15px;font-weight:600;color:var(--text);margin-bottom:2px;}
+.day-detail{font-size:12px;color:var(--text3);}
+.day-arrow{color:var(--text3);font-size:16px;}
+
+/* Cardio section */
+.section-header{font-size:11px;text-transform:uppercase;letter-spacing:0.14em;color:var(--text3);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border);}
+.cardio-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;}
+.cardio-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 14px;cursor:pointer;transition:all 0.2s;}
+.cardio-card:active{transform:scale(0.98);}
+.cardio-icon{font-size:20px;margin-bottom:8px;display:block;}
+.cardio-name{font-size:13px;font-weight:600;color:var(--text);margin-bottom:2px;}
+.cardio-detail{font-size:11px;color:var(--text3);}
+
+.home-note{background:var(--bg3);border:1px solid var(--border);border-left:3px solid var(--warm);border-radius:8px;padding:13px;font-size:12px;color:var(--text2);line-height:1.6;}
+
+/* ── WORKOUT SCREEN ── */
+#workout{flex-direction:column;}
+.wk-header{padding:16px 20px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;background:var(--bg2);position:sticky;top:0;z-index:10;}
+.back-btn{background:var(--bg3);border:1px solid var(--border);color:var(--text2);width:34px;height:34px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;}
+.wk-header-info{flex:1;}
+.wk-day-label{font-size:10px;text-transform:uppercase;letter-spacing:0.14em;color:var(--text3);margin-bottom:2px;}
+.wk-title{font-family:'DM Serif Display',serif;font-size:18px;}
+.wk-phase-tag{font-size:10px;padding:2px 8px;border-radius:20px;background:rgba(200,240,96,0.12);color:var(--accent);font-weight:500;}
+
+.prog-wrap{padding:8px 20px;background:var(--bg2);}
+.prog-info{display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin-bottom:4px;}
+.prog-bar{height:3px;background:var(--border);border-radius:2px;overflow:hidden;}
+.prog-fill{height:100%;border-radius:2px;transition:width 0.4s ease;}
+
+.block-tabs{display:flex;gap:0;padding:0 20px;background:var(--bg2);border-bottom:1px solid var(--border);overflow-x:auto;}
+.block-tab{padding:8px 14px;font-size:11px;font-weight:600;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:all 0.2s;}
+.block-tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+
+.ex-scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+.ex-container{padding:14px 20px;display:flex;flex-direction:column;gap:10px;}
+
+.block-label{font-size:10px;text-transform:uppercase;letter-spacing:0.14em;color:var(--text3);padding:0 0 4px;border-bottom:1px solid var(--border);}
+
+/* Exercise card */
+.ex-card{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;transition:border-color 0.2s;}
+.ex-card.active-ex{border-color:var(--accent);}
+.ex-card-header{padding:14px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;}
+.ex-number{width:28px;height:28px;border-radius:50%;background:var(--bg3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:var(--text3);flex-shrink:0;}
+.ex-number.active-num{background:rgba(200,240,96,0.15);border-color:var(--accent);color:var(--accent);}
+.ex-number.done-num{background:rgba(143,184,64,0.2);border-color:var(--accent2);color:var(--accent2);}
+.ex-header-info{flex:1;}
+.ex-name{font-size:15px;font-weight:600;color:var(--text);}
+.ex-prescription{font-size:12px;color:var(--text3);margin-top:1px;}
+.ex-chevron{color:var(--text3);font-size:13px;transition:transform 0.2s;}
+.ex-chevron.open{transform:rotate(180deg);}
+
+.ex-body{padding:0 16px 16px;display:none;}
+.ex-body.open{display:block;}
+.ex-cue{font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:10px;padding-top:4px;}
+.ex-points{list-style:none;display:flex;flex-direction:column;gap:5px;margin-bottom:14px;}
+.ex-points li{font-size:12px;color:var(--text2);padding-left:14px;position:relative;line-height:1.5;}
+.ex-points li::before{content:'→';position:absolute;left:0;color:var(--accent);font-size:9px;top:2px;}
+
+/* Sets tracker */
+.sets-tracker{background:var(--bg3);border-radius:10px;padding:12px;}
+.sets-label{font-size:10px;text-transform:uppercase;letter-spacing:0.12em;color:var(--text3);margin-bottom:8px;}
+.sets-row{display:flex;gap:8px;flex-wrap:wrap;}
+.set-btn{padding:6px 14px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text2);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:all 0.2s;}
+.set-btn.done{background:rgba(200,240,96,0.15);border-color:var(--accent);color:var(--accent);}
+.set-note{font-size:11px;color:var(--text3);margin-top:6px;font-style:italic;}
+
+/* Rest timer pill */
+.rest-pill{display:none;margin-top:10px;background:rgba(240,200,96,0.1);border:1px solid rgba(240,200,96,0.3);border-radius:10px;padding:10px 14px;align-items:center;gap:10px;}
+.rest-pill.visible{display:flex;}
+.rest-count{font-family:'DM Serif Display',serif;font-size:28px;color:var(--warm);min-width:48px;}
+.rest-info{flex:1;}
+.rest-title{font-size:12px;font-weight:600;color:var(--warm);}
+.rest-sub{font-size:11px;color:var(--text3);}
+.rest-skip{font-size:11px;color:var(--text3);cursor:pointer;text-decoration:underline;text-decoration-color:var(--border);}
+
+/* Supersets */
+.superset-badge{display:inline-block;font-size:9px;padding:2px 7px;border-radius:20px;background:rgba(192,96,240,0.15);color:var(--purple);font-weight:600;margin-left:6px;vertical-align:middle;}
+
+/* ── CARDIO SCREEN ── */
+#cardio-screen{flex-direction:column;}
+.cardio-header{padding:16px 20px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;background:var(--bg2);position:sticky;top:0;z-index:10;}
+.cardio-content{flex:1;overflow-y:auto;padding:20px;}
+.cardio-title{font-family:'DM Serif Display',serif;font-size:22px;margin-bottom:4px;}
+.cardio-phase-note{font-size:13px;color:var(--text2);margin-bottom:20px;line-height:1.6;}
+.protocol-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:12px;}
+.protocol-header{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.protocol-phase{font-size:11px;padding:2px 10px;border-radius:20px;font-weight:600;}
+.phase1-tag{background:rgba(200,240,96,0.12);color:var(--accent);}
+.phase2-tag{background:rgba(96,200,240,0.12);color:var(--cool);}
+.protocol-name{font-size:15px;font-weight:600;}
+.protocol-rows{display:flex;flex-direction:column;gap:6px;}
+.protocol-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);}
+.protocol-row:last-child{border-bottom:none;}
+.protocol-key{font-size:12px;color:var(--text2);}
+.protocol-val{font-size:12px;font-weight:600;color:var(--text);}
+.cardio-timer-btn{width:100%;padding:14px;border-radius:12px;border:none;background:var(--accent);color:var(--bg);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;cursor:pointer;margin-top:12px;}
+
+/* ── COMPLETE ── */
+#complete{align-items:center;justify-content:center;padding:48px 26px;text-align:center;}
+.complete-icon{font-size:56px;margin-bottom:18px;}
+.complete-title{font-family:'DM Serif Display',serif;font-size:30px;margin-bottom:8px;}
+.complete-sub{font-size:14px;color:var(--text2);line-height:1.6;margin-bottom:28px;}
+.complete-stats{display:flex;gap:10px;justify-content:center;margin-bottom:28px;flex-wrap:wrap;}
+.stat-box{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 18px;text-align:center;}
+.stat-num{font-family:'DM Serif Display',serif;font-size:22px;color:var(--accent);}
+.stat-label{font-size:10px;color:var(--text3);margin-top:1px;}
+.complete-btn{background:var(--accent);color:var(--bg);border:none;padding:14px 36px;border-radius:50px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;cursor:pointer;}
+.next-session-note{margin-top:16px;font-size:12px;color:var(--text3);line-height:1.6;}
+
+/* ── PHASE MODAL ── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:100;align-items:flex-end;}
+.modal-overlay.open{display:flex;}
+.modal-sheet{background:var(--bg2);border-radius:20px 20px 0 0;padding:24px;width:100%;border-top:1px solid var(--border);}
+.modal-title{font-family:'DM Serif Display',serif;font-size:20px;margin-bottom:4px;}
+.modal-sub{font-size:13px;color:var(--text2);margin-bottom:20px;}
+.phase-options{display:flex;flex-direction:column;gap:8px;margin-bottom:16px;}
+.phase-option{padding:14px 16px;border-radius:12px;border:1px solid var(--border);background:var(--card);cursor:pointer;display:flex;align-items:center;gap:12px;transition:all 0.2s;}
+.phase-option.selected{border-color:var(--accent);background:rgba(200,240,96,0.08);}
+.phase-option-dot{width:10px;height:10px;border-radius:50%;border:2px solid var(--border);flex-shrink:0;}
+.phase-option.selected .phase-option-dot{background:var(--accent);border-color:var(--accent);}
+.phase-option-info{flex:1;}
+.phase-option-name{font-size:14px;font-weight:600;color:var(--text);}
+.phase-option-desc{font-size:12px;color:var(--text3);margin-top:1px;}
+.modal-close{width:100%;padding:13px;border-radius:12px;border:1px solid var(--border);background:var(--bg3);color:var(--text2);font-family:'DM Sans',sans-serif;font-size:14px;cursor:pointer;}
+
+/* Rest timer overlay */
+.rest-overlay{display:none;position:fixed;inset:0;background:rgba(14,15,14,0.92);z-index:50;flex-direction:column;align-items:center;justify-content:center;}
+.rest-overlay.open{display:flex;}
+.rest-big-label{font-size:13px;text-transform:uppercase;letter-spacing:0.15em;color:var(--warm);margin-bottom:8px;}
+.rest-big-num{font-family:'DM Serif Display',serif;font-size:96px;color:var(--warm);line-height:1;}
+.rest-big-next{font-size:14px;color:var(--text2);margin-top:12px;}
+.rest-big-skip{margin-top:24px;padding:10px 28px;border-radius:50px;border:1px solid var(--border);background:transparent;color:var(--text3);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;}
+</style>
+</head>
+<body>
+
+<!-- HOME -->
+<div id="home" class="screen active">
+  <div class="logo">ReclaimOS</div>
+  <h1 class="home-title">Lift<br><em>Program</em></h1>
+  <p class="home-sub">Tue · Thu · Sat — Full body. Leave a little in the tank every session.</p>
+
+  <div class="phase-bar">
+    <div class="phase-header">
+      <div>
+        <div class="phase-label">Current Phase</div>
+        <div class="phase-name" id="phaseNameHome">Phase 1 — Reentry</div>
+      </div>
+      <span class="phase-change" onclick="openPhaseModal()">Change</span>
+    </div>
+    <div class="phase-track"><div class="phase-fill" id="phaseFill" style="width:25%"></div></div>
+    <div class="phase-weeks">
+      <span>Week 1</span><span>Week 2</span><span>Week 3</span><span>Week 4</span>
+      <span style="color:var(--cool)">Week 5+</span>
+    </div>
+  </div>
+
+  <div class="section-header">Lifting Sessions</div>
+  <div class="day-grid">
+    <div class="day-card tue" onclick="startWorkout('Tuesday')">
+      <span class="day-icon">🌿</span>
+      <div class="day-info">
+        <div class="day-name">Tuesday</div>
+        <div class="day-detail">Full body · 4 blocks · 35-45 min</div>
+      </div>
+      <span class="day-arrow">›</span>
+    </div>
+    <div class="day-card thu" onclick="startWorkout('Thursday')">
+      <span class="day-icon">⚡</span>
+      <div class="day-info">
+        <div class="day-name">Thursday</div>
+        <div class="day-detail">Full body · 4 blocks · 35-45 min</div>
+      </div>
+      <span class="day-arrow">›</span>
+    </div>
+    <div class="day-card sat" onclick="startWorkout('Saturday')">
+      <span class="day-icon">🏀</span>
+      <div class="day-info">
+        <div class="day-name">Saturday</div>
+        <div class="day-detail">Full body · 4 blocks · 35-45 min</div>
+      </div>
+      <span class="day-arrow">›</span>
+    </div>
+  </div>
+
+  <div class="section-header">Cardio</div>
+  <div class="cardio-grid">
+    <div class="cardio-card" onclick="showCardio('peloton')">
+      <span class="cardio-icon">🚴</span>
+      <div class="cardio-name">Peloton</div>
+      <div class="cardio-detail">Zone 2 base builder</div>
+    </div>
+    <div class="cardio-card" onclick="showCardio('stair')">
+      <span class="cardio-icon">🪜</span>
+      <div class="cardio-name">Stair Machine</div>
+      <div class="cardio-detail">Phase 2 · basketball legs</div>
+    </div>
+  </div>
+
+  <div class="home-note">
+    <strong style="color:var(--text)">Progressive overload rule:</strong> Add weight only when you complete all sets and reps with 2-3 reps left. Never more than 5lbs at a time. Lat pulldown weight trending toward your bodyweight = pull-ups are coming.
+  </div>
+</div>
+
+<!-- WORKOUT SCREEN -->
+<div id="workout" class="screen">
+  <div class="wk-header">
+    <button class="back-btn" onclick="goHome()">←</button>
+    <div class="wk-header-info">
+      <div class="wk-day-label" id="wkDayLabel">Tuesday</div>
+      <div class="wk-title">Full Body Session</div>
+    </div>
+    <span class="wk-phase-tag" id="wkPhaseTag">Phase 1</span>
+  </div>
+  <div class="prog-wrap">
+    <div class="prog-info"><span id="progText">Block A · Warm-Up</span><span id="progPct">0%</span></div>
+    <div class="prog-bar"><div class="prog-fill" id="progFill" style="width:0%"></div></div>
+  </div>
+  <div class="block-tabs" id="blockTabs"></div>
+  <div class="ex-scroll">
+    <div class="ex-container" id="exContainer"></div>
+  </div>
+</div>
+
+<!-- CARDIO SCREEN -->
+<div id="cardio-screen" class="screen">
+  <div class="cardio-header">
+    <button class="back-btn" onclick="goHome()">←</button>
+    <div class="wk-header-info">
+      <div class="wk-day-label" id="cardioLabel">Peloton</div>
+      <div class="wk-title" id="cardioTitle">Zone 2 Protocol</div>
+    </div>
+  </div>
+  <div class="cardio-content" id="cardioContent"></div>
+</div>
+
+<!-- COMPLETE -->
+<div id="complete" class="screen">
+  <div class="complete-icon">💪</div>
+  <div class="complete-title">Session Done</div>
+  <div class="complete-sub" id="completeMsg">Solid work. Recovery starts now.</div>
+  <div class="complete-stats">
+    <div class="stat-box"><div class="stat-num" id="statEx">0</div><div class="stat-label">Exercises</div></div>
+    <div class="stat-box"><div class="stat-num" id="statSets">0</div><div class="stat-label">Sets</div></div>
+    <div class="stat-box"><div class="stat-num" id="statTime">0</div><div class="stat-label">Minutes</div></div>
+  </div>
+  <button class="complete-btn" onclick="goHome()">Back to Home</button>
+  <p class="next-session-note" id="nextSessionNote"></p>
+</div>
+
+<!-- PHASE MODAL -->
+<div class="modal-overlay" id="phaseModal" onclick="closePhaseModal(event)">
+  <div class="modal-sheet">
+    <div class="modal-title">Set Your Phase</div>
+    <div class="modal-sub">This adjusts guidance and rest times throughout the program.</div>
+    <div class="phase-options">
+      <div class="phase-option selected" id="phaseOpt1" onclick="selectPhase(1)">
+        <div class="phase-option-dot"></div>
+        <div class="phase-option-info">
+          <div class="phase-option-name">Phase 1 — Reentry (Weeks 1-4)</div>
+          <div class="phase-option-desc">Form focus, conservative loading, building the habit</div>
+        </div>
+      </div>
+      <div class="phase-option" id="phaseOpt2" onclick="selectPhase(2)">
+        <div class="phase-option-dot"></div>
+        <div class="phase-option-info">
+          <div class="phase-option-name">Phase 2 — Build (Weeks 5-8)</div>
+          <div class="phase-option-desc">Progressive overload, adding volume and intensity</div>
+        </div>
+      </div>
+    </div>
+    <button class="modal-close" onclick="closePhaseModal()">Done</button>
+  </div>
+</div>
+
+<!-- REST OVERLAY -->
+<div class="rest-overlay" id="restOverlay">
+  <div class="rest-big-label">Rest</div>
+  <div class="rest-big-num" id="restBigNum">60</div>
+  <div class="rest-big-next" id="restBigNext">Next: —</div>
+  <button class="rest-big-skip" onclick="skipRest()">Skip rest</button>
+</div>
+
+<script>
+// ─── STATE ────────────────────────────────────────────────────
+let currentPhase = 1;
+let currentDay = 'Tuesday';
+let sessionStart = null;
+let completedSets = {};
+let restInterval = null;
+let restSeconds = 0;
+let pendingNextSet = null;
+
+// ─── PROGRAM DATA ─────────────────────────────────────────────
+
+const PROGRAM = {
+  blocks: [
+    {
+      id: 'warmup',
+      name: 'Block A',
+      label: 'Warm-Up',
+      exercises: [
+        {
+          id: 'peloton_warmup',
+          name: 'Peloton / Brisk Walk',
+          sets: 1, reps: '5 min',
+          rest: 0,
+          cue: 'Easy pace, just elevate heart rate. Not a workout — a signal to the body that movement is coming.',
+          points: ['Zone 1 — conversational pace','RPE 3-4 out of 10','Peloton resistance 20-30 if using the bike'],
+          p1note: 'Keep it truly easy in Phase 1.',
+          p2note: 'Can push slightly harder but still just warming up.'
+        },
+        {
+          id: 'leg_swings',
+          name: 'Leg Swings + Hip Circles',
+          sets: 1, reps: '10 each',
+          rest: 0,
+          cue: 'Dynamic hip mobility to open up before loading. Front/back swings then side-to-side swings, then hip circles.',
+          points: ['Hold a wall for balance','Front/back: 10 each leg','Side to side: 10 each leg','Hip circles: 10 each direction each hip','Keep torso still — only the leg moves']
+        },
+        {
+          id: 'bw_squat_warmup',
+          name: 'Bodyweight Squat',
+          sets: 1, reps: '10 reps',
+          rest: 0,
+          cue: 'Slow, deliberate. Feel your range of motion. This is a movement check, not a workout.',
+          points: ['3 seconds down, pause at the bottom','Drive back up through heels','Note any tightness or asymmetry','Add a slight toe-out if ankles are limiting depth']
+        }
+      ]
+    },
+    {
+      id: 'lower',
+      name: 'Block B',
+      label: 'Lower Body',
+      exercises: [
+        {
+          id: 'goblet_squat',
+          name: 'Goblet Squat',
+          sets: 3, reps: '10-12',
+          rest: 90,
+          cue: 'Dumbbell at chest, elbows pointing down. Sit back into the squat. This is your primary lower body strength movement.',
+          points: ['Hold DB vertically at chest, elbows down','Feet shoulder-width, toes slightly out','Sit back and down — hips below parallel is the goal','Drive knees out — track over toes','Press through heels to stand','Phase 1: learn the movement, moderate weight'],
+          p1note: 'Start lighter than you think. Find the weight where you could do 3-4 more reps.',
+          p2note: 'Increase weight when all 3x12 feel solid with 2-3 reps in the tank.',
+          superset: false
+        },
+        {
+          id: 'rdl',
+          name: 'Romanian Deadlift (DB)',
+          sets: 3, reps: '10-12',
+          rest: 90,
+          cue: 'Hinge at the hip, not the waist. Back stays flat the entire time. Feel the hamstring stretch at the bottom.',
+          points: ['DBs in hands, slight bend in knees','Push hips BACK as you hinge — back stays flat','Lower until you feel a strong hamstring stretch','Drive hips forward to stand — squeeze glutes','Do NOT round the lower back at the bottom','Slow: 3 seconds down, 1 second up'],
+          p1note: 'The hinge pattern may feel unfamiliar. Go lighter and focus on form.',
+          p2note: 'Add weight when the hamstring stretch is consistently strong throughout all reps.'
+        },
+        {
+          id: 'split_squat',
+          name: 'Split Squat (Rear Foot Elevated)',
+          sets: 3, reps: '8-10 each',
+          rest: 90,
+          cue: 'Rear foot on bench. The slow lowering is where all the knee protection work happens. Do NOT rush this.',
+          points: ['Rear foot on bench, front foot far enough forward','Lower rear knee toward floor — 3-4 seconds down','Front shin stays close to vertical','Drive through front heel to stand','Keep torso upright — don\'t lean forward','Phase 1: bodyweight first, add DBs when form is solid'],
+          p1note: 'Start with bodyweight. Add light DBs (10-15lbs each) only when the movement pattern feels natural.',
+          p2note: 'This is a knee bulletproofing exercise as much as a strength exercise. Slow lowering is always the priority.'
+        },
+        {
+          id: 'step_down',
+          name: 'Step-Down',
+          sets: 2, reps: '8 each',
+          rest: 60,
+          cue: 'Step off a bench or step. The eccentric lowering activates the VMO and builds knee stability directly. Slow descent is everything.',
+          points: ['Stand on edge of bench, one foot hanging','Lower the hanging foot toward floor — 4 seconds down','Tap the floor lightly — don\'t shift weight to it','Drive back up through the standing heel','Hips stay level — don\'t drop toward the hanging side','Use a wall for balance if needed'],
+          p1note: 'Focus entirely on the controlled descent. Speed is not the goal.',
+          p2note: 'Increase step height slightly for more range. Can hold a light DB for added challenge.'
+        },
+        {
+          id: 'calf_raise_slant',
+          name: 'Eccentric Calf Raise (Slant Board)',
+          sets: 3, reps: '15 slow',
+          rest: 60,
+          cue: 'NON-NEGOTIABLE for your Achilles history. Do both straight-leg and bent-knee sets. The slow lowering is the medicine.',
+          points: ['Set 1-2: straight leg (gastrocnemius)','Set 3: slight knee bend (soleus)','Rise up on 2 counts — lower on 4 counts','Feel the stretch at the bottom — don\'t cut it short','The slant board increases range and load at the Achilles','Both feet first, can progress to single leg later'],
+          p1note: 'This is the single most important exercise in the program given your bilateral Achilles history. Never skip it.',
+          p2note: 'Progress toward single-leg version over weeks 5-8.'
+        }
+      ]
+    },
+    {
+      id: 'upper',
+      name: 'Block C',
+      label: 'Upper Body',
+      exercises: [
+        {
+          id: 'lat_pulldown',
+          name: 'Lat Pulldown → Pull-Up Progression',
+          sets: 3, reps: '10-12',
+          rest: 90,
+          cue: 'Your vertical pull. Builds toward pull-ups over time. Phase 1: cable lat pulldown. Phase 2: band-assisted pull-ups. Phase 3+: negatives then full pull-ups.',
+          points: [
+            'Phase 1 — Lat Pulldown: wide grip, pull bar to upper chest, lean back slightly',
+            'Squeeze lats at the bottom — feel the shoulder blades pull down and together',
+            'Control the return — arms fully extend at top before next rep',
+            'Starting weight: roughly 50-60% of bodyweight, adjust to where 10-12 feels challenging',
+            'Phase 2 — Band Pull-Up: heavy band over bar, knee in band, full range pull-ups',
+            'Phase 3 — Negative Pull-Up: jump to top, lower yourself in 5-8 seconds',
+            'Phase 4 — Unassisted: even 1-2 full pull-ups counts as a win'
+          ],
+          p1note: 'Lat pulldown only right now. Focus on feeling the lats — not just pulling with the arms. Drive your elbows DOWN toward your hips. Track your weight here — when it approaches your bodyweight you are close to pull-up ready.',
+          p2note: 'Try band-assisted pull-ups alongside the lat pulldown. One set of each. The band progression is: heavy band → medium band → light band → unassisted.'
+        },
+        {
+          id: 'db_bench',
+          name: 'Dumbbell Bench Press',
+          sets: 3, reps: '10-12',
+          rest: 90,
+          cue: 'Control the descent. The eccentric (lowering) is half the work. Don\'t let the DBs crash to your chest.',
+          points: ['Flat back on bench, feet flat on floor','DBs at chest height, elbows at 45° (not straight out)','Press up — don\'t fully lock out at top','Lower slowly — 2-3 seconds down','Stop before full lock to keep tension on chest','Phase 1: find a weight you can control completely']
+        },
+        {
+          id: 'single_row',
+          name: 'Single Arm DB Row',
+          sets: 3, reps: '10-12 each',
+          rest: 90,
+          cue: 'Brace on the bench. Pull the elbow toward your hip — not your ear. Squeeze at the top.',
+          points: ['Knee and hand on bench, torso parallel to floor','Pull elbow straight back toward hip','Squeeze the lat at the top — 1 second hold','Lower with control — full stretch at bottom','Don\'t rotate torso — keep it square','Heavy enough that the last 2 reps are challenging']
+        },
+        {
+          id: 'db_shoulder_press',
+          name: 'Dumbbell Shoulder Press',
+          sets: 3, reps: '10-12',
+          rest: 90,
+          cue: 'Don\'t lock out fully at the top — keep tension on the shoulder throughout. Seated is fine, standing is harder.',
+          points: ['DBs at shoulder height, elbows at 90°','Press up but stop just short of full lockout','Lower slowly back to shoulder height','Keep core braced — don\'t arch the lower back','Phase 1: lighter than you think — shoulders fatigue fast','Right shoulder: monitor for any posterior soreness']
+        },
+        {
+          id: 'face_pull',
+          name: 'Face Pull (Cable or Band)',
+          sets: 3, reps: '15',
+          rest: 60,
+          cue: 'Your posterior rotator cuff maintenance. Elbows HIGH, pull to forehead level. This directly addresses your right shoulder.',
+          points: ['Cable at head height, rope attachment','Elbows high — above shoulder level throughout','Pull toward forehead, hands going to ears','Squeeze shoulder blades at the back','Pause 1 second at full contraction','Light weight — this is rehab work, not a strength exercise'],
+          superset: 'band_pullap'
+        },
+        {
+          id: 'band_pullap',
+          name: 'Band Pull-Apart',
+          sets: 3, reps: '15',
+          rest: 60,
+          cue: 'Superset this with face pulls. Arms straight, pull the band apart to chest width. The posterior cuff and rear delts do the work.',
+          points: ['Arms straight at shoulder height, band in both hands','Pull band apart until it touches your chest','Squeeze shoulder blades hard at the end position','Return slowly — don\'t just let it snap back','Light band — the last few reps should be a mild burn'],
+          superset: 'face_pull'
+        }
+      ]
+    },
+    {
+      id: 'core',
+      name: 'Block D',
+      label: 'Core + Bulletproofing',
+      exercises: [
+        {
+          id: 'dead_bug_lift',
+          name: 'Dead Bug',
+          sets: 3, reps: '8-10 each side',
+          rest: 60,
+          cue: 'Lower back FLAT to the floor the entire time. If it comes up, you\'ve gone too far. Slow and deliberate.',
+          points: ['Back flat, arms up, knees at 90° over hips','Press lower back into the floor — maintain this always','Lower right arm and left leg toward floor','Stop before lower back lifts — that\'s your range','Return and repeat opposite side','Exhale as you extend — helps keep the back flat']
+        },
+        {
+          id: 'glute_bridge_lift',
+          name: 'Glute Bridge',
+          sets: 3, reps: '12-15',
+          rest: 60,
+          cue: 'Hip strength protects the knee. Squeeze hard at the top and hold 2 seconds. Progress to single-leg over time.',
+          points: ['Feet flat, hip-width apart, knees bent','Drive through both heels — hips to ceiling','Squeeze glutes hard at top — 2 second hold','Lower slowly — don\'t drop','Keep core braced throughout','Progress: add a band above knees for extra glute activation']
+        },
+        {
+          id: 'ext_rotation',
+          name: 'Side-Lying External Rotation',
+          sets: 2, reps: '15 each',
+          rest: 45,
+          cue: 'Light DB only — 2-5lbs. This is rotator cuff rehabilitation work, not a strength exercise. Slow and controlled.',
+          points: ['Lie on side, elbow bent at 90°, DB in top hand','Rotate forearm up toward ceiling — keep elbow at side','Feel the posterior shoulder working','Lower slowly — resist all the way down','Do NOT use momentum — if you are, the weight is too heavy','This is the direct fix for your right shoulder soreness'],
+          p1note: 'Use 2-3lbs. This is more important than it looks. The infraspinatus and teres minor do all the work.'
+        },
+        {
+          id: 'tke_lift',
+          name: 'Terminal Knee Extension (Band)',
+          sets: 2, reps: '15 each',
+          rest: 45,
+          cue: 'Band behind knee, extend against resistance. Feel the VMO (inner teardrop quad) fire. Direct knee stability work.',
+          points: ['Band at knee height behind you, step in','Band sits behind the knee with light tension','Slight hip hinge, soft bend in both knees','Extend banded knee against the resistance','Feel the inner quad fire at full extension','15 slow reps — control throughout']
+        },
+        {
+          id: 'lacrosse_lift',
+          name: 'Lacrosse Ball Foot Roll',
+          sets: 1, reps: '90 sec each foot',
+          rest: 0,
+          cue: 'Daily Achilles chain maintenance. Extra time on the arch — that\'s where most tension accumulates.',
+          points: ['Standing or seated — standing gives more pressure','Start at the heel, slow firm pressure','Roll through the arch — pause at tight spots','Work toward the ball of the foot','Inner arch gets extra attention','Do this while resting between other sets if short on time']
+        }
+      ]
+    }
+  ]
+};
+
+// ─── CARDIO DATA ──────────────────────────────────────────────
+
+const CARDIO_PROTOCOLS = {
+  peloton: {
+    title: 'Peloton Protocol',
+    icon: '🚴',
+    phases: [
+      {
+        phase: 1,
+        name: 'Phase 1: Base Building (Weeks 1-4)',
+        rows: [
+          {k:'Duration', v:'20-30 min'},
+          {k:'Frequency', v:'2-3x per week'},
+          {k:'Pace', v:'Zone 2 — conversational'},
+          {k:'Resistance', v:'30-45'},
+          {k:'Cadence', v:'80-90 RPM'},
+          {k:'Intervals', v:'None — steady state only'}
+        ],
+        note: 'Zone 2 means you can hold a conversation. Not easy, but not hard. Building your aerobic base without taxing your joints.'
+      },
+      {
+        phase: 2,
+        name: 'Phase 2: Build Volume (Weeks 5-8)',
+        rows: [
+          {k:'Duration', v:'30-40 min'},
+          {k:'Frequency', v:'3x per week'},
+          {k:'Zone 2 sessions', v:'2x per week (steady state)'},
+          {k:'Interval session', v:'1x per week'},
+          {k:'Interval format', v:'20 min with 6x 1-min pickups'},
+          {k:'Pickup pace', v:'Zone 3-4 — hard but not max'}
+        ],
+        note: 'Intervals added in Phase 2 only. Keep two sessions at Zone 2. The aerobic base comes first.'
+      }
+    ]
+  },
+  stair: {
+    title: 'Stair Machine Protocol',
+    icon: '🪜',
+    phases: [
+      {
+        phase: 2,
+        name: 'Phase 2 Only (Weeks 5+)',
+        rows: [
+          {k:'Duration', v:'15-20 min'},
+          {k:'Frequency', v:'1-2x per week (add to Peloton)'},
+          {k:'Pace', v:'Moderate — can still breathe'},
+          {k:'Why it\'s here', v:'Basketball-specific leg endurance'},
+          {k:'Target muscles', v:'Hip flexors, glutes, quads'},
+          {k:'When to use', v:'Replace one Peloton session in Phase 2'}
+        ],
+        note: 'The stair machine builds the specific leg endurance you need for basketball — particularly the hip flexors and glutes that drive cutting and jumping. Add it in Phase 2 once your base is established.'
+      }
+    ]
+  }
+};
+
+// ─── NAVIGATION ───────────────────────────────────────────────
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function goHome() {
+  clearRest();
+  showScreen('home');
+}
+
+// ─── PHASE MANAGEMENT ─────────────────────────────────────────
+
+function openPhaseModal() {
+  document.getElementById('phaseModal').classList.add('open');
+}
+
+function closePhaseModal(e) {
+  if (!e || e.target === document.getElementById('phaseModal')) {
+    document.getElementById('phaseModal').classList.remove('open');
+    updatePhaseUI();
+  }
+}
+
+function selectPhase(p) {
+  currentPhase = p;
+  document.getElementById('phaseOpt1').classList.toggle('selected', p === 1);
+  document.getElementById('phaseOpt2').classList.toggle('selected', p === 2);
+}
+
+function updatePhaseUI() {
+  const names = {1: 'Phase 1 — Reentry', 2: 'Phase 2 — Build'};
+  const fills = {1: '25%', 2: '75%'};
+  document.getElementById('phaseNameHome').textContent = names[currentPhase];
+  document.getElementById('phaseFill').style.width = fills[currentPhase];
+}
+
+// ─── WORKOUT ──────────────────────────────────────────────────
+
+function startWorkout(day) {
+  currentDay = day;
+  sessionStart = Date.now();
+  completedSets = {};
+
+  document.getElementById('wkDayLabel').textContent = day;
+  document.getElementById('wkPhaseTag').textContent = `Phase ${currentPhase}`;
+
+  // Build block tabs
+  const tabs = document.getElementById('blockTabs');
+  tabs.innerHTML = PROGRAM.blocks.map((b, i) =>
+    `<div class="block-tab ${i === 0 ? 'active' : ''}" onclick="scrollToBlock('${b.id}')" id="tab-${b.id}">${b.name}: ${b.label}</div>`
+  ).join('');
+
+  renderAllBlocks();
+  updateProgress();
+  showScreen('workout');
+}
+
+function renderAllBlocks() {
+  const container = document.getElementById('exContainer');
+  let html = '';
+  let exNum = 0;
+
+  PROGRAM.blocks.forEach(block => {
+    html += `<div class="block-label" id="block-${block.id}">${block.name} — ${block.label}</div>`;
+    block.exercises.forEach(ex => {
+      exNum++;
+      const key = ex.id;
+      const done = completedSets[key] || 0;
+      const total = ex.sets;
+      const isDone = done >= total;
+      const isActive = !isDone;
+
+      const phaseNote = currentPhase === 1 ? ex.p1note : ex.p2note;
+
+      html += `
+        <div class="ex-card ${isActive && done > 0 ? 'active-ex' : ''}" id="excard-${key}">
+          <div class="ex-card-header" onclick="toggleEx('${key}')">
+            <div class="ex-number ${isDone ? 'done-num' : done > 0 ? 'active-num' : ''}" id="exnum-${key}">
+              ${isDone ? '✓' : exNum}
+            </div>
+            <div class="ex-header-info">
+              <div class="ex-name">${ex.name}${ex.superset ? `<span class="superset-badge">superset</span>` : ''}</div>
+              <div class="ex-prescription">${ex.sets > 1 ? ex.sets + ' sets · ' : ''}${ex.reps}${ex.rest > 0 ? ' · ' + ex.rest + 's rest' : ''}</div>
+            </div>
+            <span class="ex-chevron" id="chev-${key}">▾</span>
+          </div>
+          <div class="ex-body" id="exbody-${key}">
+            <div class="ex-cue">${ex.cue}</div>
+            <ul class="ex-points">${ex.points.map(p => `<li>${p}</li>`).join('')}</ul>
+            ${phaseNote ? `<div style="background:rgba(200,240,96,0.07);border:1px solid rgba(200,240,96,0.2);border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:12px;color:var(--text2);line-height:1.5"><strong style="color:var(--accent)">Phase ${currentPhase} note:</strong> ${phaseNote}</div>` : ''}
+            ${ex.sets > 0 ? renderSetsTracker(key, ex) : ''}
+          </div>
+        </div>`;
+    });
+  });
+
+  container.innerHTML = html;
+}
+
+function renderSetsTracker(key, ex) {
+  if (ex.sets === 0 || ex.sets === 1 && ex.rest === 0) return '';
+  const done = completedSets[key] || 0;
+  let btns = '';
+  for (let i = 1; i <= ex.sets; i++) {
+    btns += `<button class="set-btn ${i <= done ? 'done' : ''}" onclick="completeSet('${key}', ${i}, ${ex.rest}, event)">${i <= done ? '✓' : ''} Set ${i}</button>`;
+  }
+  return `
+    <div class="sets-tracker">
+      <div class="sets-label">Sets completed</div>
+      <div class="sets-row" id="sets-${key}">${btns}</div>
+      ${ex.rest > 0 ? `<div class="set-note">Rest ${ex.rest}s between sets</div>` : ''}
+    </div>`;
+}
+
+function toggleEx(key) {
+  const body = document.getElementById('exbody-' + key);
+  const chev = document.getElementById('chev-' + key);
+  const isOpen = body.classList.contains('open');
+  body.classList.toggle('open', !isOpen);
+  chev.classList.toggle('open', !isOpen);
+}
+
+function completeSet(key, setNum, restTime, e) {
+  e.stopPropagation();
+  completedSets[key] = Math.max(completedSets[key] || 0, setNum);
+
+  // Update buttons
+  const container = document.getElementById('sets-' + key);
+  if (container) {
+    const buttons = container.querySelectorAll('.set-btn');
+    buttons.forEach((btn, i) => {
+      btn.classList.toggle('done', i < setNum);
+      btn.innerHTML = i < setNum ? `✓ Set ${i+1}` : `Set ${i+1}`;
+    });
+  }
+
+  // Update number badge
+  const ex = findExercise(key);
+  const isDone = setNum >= ex.sets;
+  const numEl = document.getElementById('exnum-' + key);
+  const card = document.getElementById('excard-' + key);
+  if (numEl) {
+    numEl.className = `ex-number ${isDone ? 'done-num' : 'active-num'}`;
+    numEl.textContent = isDone ? '✓' : numEl.textContent;
+  }
+  if (card) card.classList.toggle('active-ex', !isDone && setNum > 0);
+
+  updateProgress();
+
+  // Start rest timer if not last set
+  if (restTime > 0 && !isDone) {
+    startRest(restTime, key, ex);
+  }
+
+  // Auto-open next exercise if this one is done
+  if (isDone) {
+    const nextEx = findNextExercise(key);
+    if (nextEx) {
+      const nextBody = document.getElementById('exbody-' + nextEx.id);
+      const nextChev = document.getElementById('chev-' + nextEx.id);
+      if (nextBody && !nextBody.classList.contains('open')) {
+        nextBody.classList.add('open');
+        if (nextChev) nextChev.classList.add('open');
+        setTimeout(() => {
+          document.getElementById('excard-' + nextEx.id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 200);
+      }
+    } else {
+      // All done
+      setTimeout(showComplete, 300);
+    }
+  }
+}
+
+function findExercise(key) {
+  for (const block of PROGRAM.blocks) {
+    for (const ex of block.exercises) {
+      if (ex.id === key) return ex;
+    }
+  }
+  return null;
+}
+
+function findNextExercise(key) {
+  let found = false;
+  for (const block of PROGRAM.blocks) {
+    for (const ex of block.exercises) {
+      if (found && ex.sets > 1) return ex;
+      if (ex.id === key) found = true;
+    }
+  }
+  return null;
+}
+
+function isAllDone() {
+  for (const block of PROGRAM.blocks) {
+    for (const ex of block.exercises) {
+      if (ex.sets > 1) {
+        const done = completedSets[ex.id] || 0;
+        if (done < ex.sets) return false;
+      }
+    }
+  }
+  return true;
+}
+
+function updateProgress() {
+  let total = 0, done = 0;
+  PROGRAM.blocks.forEach(b => b.exercises.forEach(ex => {
+    if (ex.sets > 1) { total += ex.sets; done += (completedSets[ex.id] || 0); }
+  }));
+  const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+  document.getElementById('progText').textContent = `${done} of ${total} sets complete`;
+  document.getElementById('progPct').textContent = pct + '%';
+  document.getElementById('progFill').style.width = pct + '%';
+}
+
+function scrollToBlock(id) {
+  document.getElementById('block-' + id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  document.querySelectorAll('.block-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + id)?.classList.add('active');
+}
+
+// ─── REST TIMER ───────────────────────────────────────────────
+
+function startRest(seconds, currentKey, currentEx) {
+  clearRest();
+  restSeconds = seconds;
+
+  const nextEx = findNextExercise(currentKey);
+  const nextName = nextEx ? nextEx.name : currentEx.name + ' (next set)';
+
+  document.getElementById('restBigNum').textContent = restSeconds;
+  document.getElementById('restBigNext').textContent = 'Next: ' + nextName;
+  document.getElementById('restOverlay').classList.add('open');
+
+  restInterval = setInterval(() => {
+    restSeconds--;
+    document.getElementById('restBigNum').textContent = restSeconds;
+    if (restSeconds <= 0) {
+      clearRest();
+    }
+  }, 1000);
+}
+
+function clearRest() {
+  clearInterval(restInterval);
+  restInterval = null;
+  document.getElementById('restOverlay').classList.remove('open');
+}
+
+function skipRest() {
+  clearRest();
+}
+
+// ─── COMPLETE ─────────────────────────────────────────────────
+
+function showComplete() {
+  const elapsed = Math.round((Date.now() - sessionStart) / 60000);
+  let totalSets = 0;
+  Object.values(completedSets).forEach(v => totalSets += v);
+
+  let exCount = 0;
+  PROGRAM.blocks.forEach(b => b.exercises.forEach(ex => {
+    if ((completedSets[ex.id] || 0) > 0) exCount++;
+  }));
+
+  document.getElementById('statEx').textContent = exCount;
+  document.getElementById('statSets').textContent = totalSets;
+  document.getElementById('statTime').textContent = elapsed || '35';
+
+  const dayMessages = {
+    Tuesday: "Tuesday done. Thursday next — same program, go a little heavier where last session felt easy.",
+    Thursday: "Thursday done. Saturday next — last session of the week. Finish strong.",
+    Saturday: "Week complete. Rest Sunday. Monday mobility. Back at it Tuesday."
+  };
+
+  document.getElementById('completeMsg').textContent = "Solid work. Recovery starts now.";
+  document.getElementById('nextSessionNote').textContent = dayMessages[currentDay] || '';
+
+  showScreen('complete');
+}
+
+// ─── CARDIO ───────────────────────────────────────────────────
+
+function showCardio(type) {
+  const data = CARDIO_PROTOCOLS[type];
+  document.getElementById('cardioLabel').textContent = data.icon + ' ' + data.title;
+  document.getElementById('cardioTitle').textContent = data.title;
+
+  // Filter phases relevant to current phase
+  const relevantPhases = data.phases.filter(p => p.phase <= currentPhase || data.phases.length === 1);
+
+  let html = `<div class="cardio-title">${data.title}</div>
+    <p class="cardio-phase-note">Showing protocols for Phase ${currentPhase}. Change your phase on the home screen to see different guidance.</p>`;
+
+  data.phases.forEach(phase => {
+    const tagClass = phase.phase === 1 ? 'phase1-tag' : 'phase2-tag';
+    const isCurrentPhase = phase.phase === currentPhase;
+    html += `
+      <div class="protocol-card" style="${!isCurrentPhase ? 'opacity:0.5' : ''}">
+        <div class="protocol-header">
+          <span class="protocol-phase ${tagClass}">Phase ${phase.phase}</span>
+          <span class="protocol-name">${phase.name}</span>
+        </div>
+        <div class="protocol-rows">
+          ${phase.rows.map(r => `
+            <div class="protocol-row">
+              <span class="protocol-key">${r.k}</span>
+              <span class="protocol-val">${r.v}</span>
+            </div>`).join('')}
+        </div>
+        ${phase.note ? `<div style="margin-top:10px;font-size:12px;color:var(--text2);line-height:1.5;padding-top:10px;border-top:1px solid var(--border)">${phase.note}</div>` : ''}
+      </div>`;
+  });
+
+  document.getElementById('cardioContent').innerHTML = html;
+  showScreen('cardio-screen');
+}
+
+// ─── INIT ─────────────────────────────────────────────────────
+
+updatePhaseUI();
+</script>
+</body>
+</html>
